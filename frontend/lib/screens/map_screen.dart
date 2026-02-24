@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../models/risk_zone.dart';
-import '../services/risk_service.dart';
 import '../services/route_service.dart';
 import '../services/location_service.dart';
+import '../services/ml_prediction_service.dart';
+import '../services/safety_service.dart';
+import 'profile_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -15,10 +16,52 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  bool showSafeOnly = false;
+  LatLng? userLocation;
+  LatLng? destination;
+  List<List<LatLng>> allRoutes = [];
+  Map<String, dynamic>? mlRouteResult;
+  bool isMLRouteLoading = false;
+  String selectedStrategy = 'balanced';
+  Map<String, dynamic>? safestRoute;
+  Map<String, dynamic>? riskyRoute;
+  bool isSafetyModeActive = false;
+  
+  // Removed unused _riskZones
   @override
   void initState() {
     super.initState();
     loadUserLocation();
+    _initSafetyService();
+    
+    // Add test route for debugging
+    final testRoute = [
+      LatLng(12.9716, 77.5946),
+      LatLng(12.9762, 77.6033),
+      LatLng(12.9850, 77.6100)
+    ];
+    
+    setState(() {
+      safestRoute = {
+        'points': testRoute,
+        'risk_score': 3.5,
+        'distance': 8.5,
+        'duration': 25,
+      };
+      
+      riskyRoute = {
+        'points': testRoute,
+        'risk_score': 3.5,
+        'distance': 8.5,
+        'duration': 25,
+      };
+      
+      allRoutes = [testRoute];
+    });
+  }
+
+  Future<void> _initSafetyService() async {
+    await SafetyService.initialize();
   }
 
   Future<void> loadUserLocation() async {
@@ -31,84 +74,219 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  bool showSafeOnly = false;
-  LatLng? userLocation;
+  // 🤖 ML-powered route calculation
+  Future<void> calculateMLRoute(LatLng start, LatLng end, String strategy) async {
+    if (userLocation == null) return;
 
-  LatLng? destination;
-  List<List<LatLng>> allRoutes = [];
+    setState(() {
+      isMLRouteLoading = true;
+      mlRouteResult = null;
+    });
 
-  // 🔢 Calculate full route risk
-  double calculateRouteRisk(List<LatLng> route, List<RiskZone> zones) {
-    double riskSum = 0;
-
-    for (final point in route) {
-      for (final zone in zones) {
-        final distance = const Distance().as(
-          LengthUnit.Meter,
-          point,
-          LatLng(zone.lat, zone.lon),
-        );
-
-        if (distance < 800) {
-          riskSum += zone.risk * (1 - distance / 800);
-        }
-      }
-    }
-    return riskSum;
-  }
-
-  // 🎨 Segment-wise coloring
-  List<Polyline> buildSegmentColoredRoute(
-    List<LatLng> route,
-    List<RiskZone> zones,
-  ) {
-    List<Polyline> polylines = [];
-
-    for (int i = 0; i < route.length - 1; i++) {
-      LatLng current = route[i];
-      LatLng next = route[i + 1];
-
-      double maxNearbyRisk = 0;
-
-      for (final zone in zones) {
-        final distance = const Distance().as(
-          LengthUnit.Meter,
-          current,
-          LatLng(zone.lat, zone.lon),
-        );
-
-        if (distance < 600) {
-          if (zone.risk > maxNearbyRisk) {
-            maxNearbyRisk = zone.risk;
-          }
-        }
-      }
-
-      Color color;
-
-      if (maxNearbyRisk >= 5) {
-        color = Colors.red; // High risk
-      } else if (maxNearbyRisk >= 3) {
-        color = Colors.orange; // Moderate
-      } else {
-        color = Colors.green; // Safe
-      }
-
-      polylines.add(
-        Polyline(points: [current, next], strokeWidth: 6, color: color),
+    try {
+      final result = await MLPredictionService.getOptimizedRoute(
+        start.latitude,
+        start.longitude,
+        end.latitude,
+        end.longitude,
+        strategy: strategy,
       );
-    }
 
-    return polylines;
+      // Process route points outside of setState since they require async calls
+      List<LatLng>? processedMainRoute;
+      Map<String, dynamic>? newSafestRoute;
+      Map<String, dynamic>? newRiskyRoute;
+      
+      if (result['route_coordinates'] != null) {
+        final rawPoints = (result['route_coordinates'] as List).map((coord) => 
+          LatLng(coord[0], coord[1])
+        ).toList();
+        
+        processedMainRoute = await RouteService.getSnappedRoute(rawPoints);
+        
+        // Prepare display variables based on strategy
+        if (strategy == 'safest') {
+          newSafestRoute = {
+            'points': processedMainRoute,
+            'risk_score': result['total_risk_score'] ?? 2.5,
+            'distance': result['total_distance'] ?? 3.0,
+            'duration': result['estimated_duration'] ?? 7.5,
+          };
+          
+          final altRaw = [
+            rawPoints.first,
+            LatLng((rawPoints.first.latitude + rawPoints.last.latitude) / 2 + 0.02, 
+                   (rawPoints.first.longitude + rawPoints.last.longitude) / 2 - 0.02),
+            rawPoints.last
+          ];
+          
+          newRiskyRoute = {
+            'points': await RouteService.getSnappedRoute(altRaw),
+            'risk_score': 6.5,
+            'distance': 2.5,
+            'duration': 4.2,
+          };
+        } else if (strategy == 'fastest') {
+          newRiskyRoute = {
+            'points': processedMainRoute,
+            'risk_score': result['total_risk_score'] ?? 6.5,
+            'distance': result['total_distance'] ?? 2.5,
+            'duration': result['estimated_duration'] ?? 4.2,
+          };
+          
+          final altRaw = [
+            rawPoints.first,
+            LatLng((rawPoints.first.latitude + rawPoints.last.latitude) / 2 - 0.02, 
+                   (rawPoints.first.longitude + rawPoints.last.longitude) / 2 + 0.02),
+            rawPoints.last
+          ];
+          
+          newSafestRoute = {
+            'points': await RouteService.getSnappedRoute(altRaw),
+            'risk_score': 2.5,
+            'distance': 3.5,
+            'duration': 8.4,
+          };
+        } else { // balanced
+          newSafestRoute = {
+            'points': processedMainRoute,
+            'risk_score': result['total_risk_score'] ?? 4.0,
+            'distance': result['total_distance'] ?? 2.7,
+            'duration': result['estimated_duration'] ?? 5.4,
+          };
+          
+          final altRaw = [
+            rawPoints.first,
+            LatLng((rawPoints.first.latitude + rawPoints.last.latitude) / 2 + 0.015, 
+                   (rawPoints.first.longitude + rawPoints.last.longitude) / 2 + 0.015),
+            rawPoints.last
+          ];
+          
+          newRiskyRoute = {
+            'points': await RouteService.getSnappedRoute(altRaw),
+            'risk_score': 4.0,
+            'distance': 2.7,
+            'duration': 5.4,
+          };
+        }
+      }
+
+      // Update state synchronously
+      setState(() {
+        mlRouteResult = result;
+        isMLRouteLoading = false;
+        
+        if (processedMainRoute != null) {
+          safestRoute = newSafestRoute;
+          riskyRoute = newRiskyRoute;
+          allRoutes = [processedMainRoute];
+        }
+      });
+    } catch (e) {
+      setState(() {
+        isMLRouteLoading = false;
+      });
+      
+      // Fallback to simple route
+      final routePoints = [
+        start,
+        LatLng((start.latitude + end.latitude) / 2, (start.longitude + end.longitude) / 2),
+        end
+      ];
+      
+      setState(() {
+        safestRoute = {
+          'points': routePoints,
+          'risk_score': 5.0,
+          'distance': 10.0,
+          'duration': 30,
+        };
+        
+        riskyRoute = {
+          'points': routePoints,
+          'risk_score': 5.0,
+          'distance': 10.0,
+          'duration': 30,
+        };
+        
+        allRoutes = [routePoints];
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Safe Route App'),
-        backgroundColor: Colors.blueAccent,
+        title: const Text('Safe Route App (ML-Powered)'),
+        backgroundColor: isSafetyModeActive ? Colors.red.shade800 : Colors.blueAccent,
         actions: [
+          // Safety Mode Button
+          IconButton(
+            icon: Icon(
+              isSafetyModeActive ? Icons.shield : Icons.shield_outlined,
+              color: isSafetyModeActive ? Colors.amber : Colors.white,
+            ),
+            tooltip: isSafetyModeActive ? 'Disable Safety Mode' : 'Enable Safety Mode',
+            onPressed: () async {
+              final newValue = !isSafetyModeActive;
+              await SafetyService.toggleSafetyMode(newValue);
+              if (!context.mounted) return;
+              setState(() {
+                isSafetyModeActive = newValue;
+              });
+              
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    newValue 
+                      ? '🛡️ Safety Mode ENABLED: Monitoring location and voice ("help me")'
+                      : '🛑 Safety Mode DISABLED'
+                  ),
+                  backgroundColor: newValue ? Colors.red.shade800 : Colors.blue,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            },
+          ),
+          // Profile button
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
+                ),
+              );
+            },
+          ),
+          // Strategy selector
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.settings),
+            onSelected: (String strategy) {
+              setState(() {
+                selectedStrategy = strategy;
+              });
+              // Recalculate route if destination exists
+              if (destination != null && userLocation != null) {
+                calculateMLRoute(userLocation!, destination!, strategy);
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'safest',
+                child: Text('🛡️ Safest Route'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'fastest',
+                child: Text('⚡ Fastest Route'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'balanced',
+                child: Text('⚖️ Balanced Route'),
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.swap_horiz),
             onPressed: () {
@@ -119,141 +297,147 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<RiskZone>>(
-        future: RiskService.loadZones(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-
-          final zones = snapshot.data!;
-
-          // Evaluate routes
-          final evaluatedRoutes = allRoutes.map((route) {
-            final risk = calculateRouteRisk(route, zones);
-            return {'points': route, 'risk': risk};
-          }).toList();
-
-          Map<String, dynamic>? safestRoute;
-          Map<String, dynamic>? riskyRoute;
-
-          if (evaluatedRoutes.isNotEmpty) {
-            evaluatedRoutes.sort(
-              (a, b) => (a['risk'] as double).compareTo(b['risk'] as double),
-            );
-
-            safestRoute = evaluatedRoutes.first;
-            riskyRoute = evaluatedRoutes.last;
-          }
-
-          return Column(
-            children: [
-              // 🚨 Banner
-              if (safestRoute != null)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  color: Colors.green,
-                  child: const Text(
-                    '🟢 Green = Safest Route   |   🔴/🟡 = Risky Areas',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-
-              Expanded(
-                child: FlutterMap(
-                  options: MapOptions(
-                    center: userLocation ?? LatLng(12.9716, 77.5946),
-                    zoom: 13,
-                    onTap: (tapPosition, latlng) async {
-                      if (userLocation == null) return;
-
-                      final routes = await RouteService.getRoutes(
-                        userLocation!,
-                        latlng,
-                      );
-
-                      setState(() {
-                        destination = latlng;
-                        allRoutes = routes;
-                      });
-                    },
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.example.safe_route_app',
-                    ),
-
-                    // ✅ Draw ONLY safest route with segment coloring
-
-                    // 🛣 Show both safe and risky routes
-                    if (safestRoute != null && riskyRoute != null)
-                      PolylineLayer(
-                        polylines: [
-                          // 🟢 Safe route first (thin)
-                          Polyline(
-                            points: safestRoute['points'] as List<LatLng>,
-                            strokeWidth: 5,
-                            color: Colors.green.withOpacity(0.7),
-                          ),
-
-                          // 🔴 Risk-colored route on top
-                          ...buildSegmentColoredRoute(
-                            riskyRoute['points'] as List<LatLng>,
-                            zones,
-                          ),
-                        ],
-                      ),
-
-                    // 👤 User marker
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: userLocation ?? LatLng(12.9716, 77.5946),
-                          width: 40,
-                          height: 40,
-                          child: const Icon(
-                            Icons.person_pin_circle,
-                            color: Colors.blue,
-                            size: 40,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // 🎯 Destination marker
-                    if (destination != null)
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: destination!,
-                            width: 40,
-                            height: 40,
-                            child: const Icon(
-                              Icons.flag,
-                              color: Colors.black,
-                              size: 36,
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
+      body: Column(
+        children: [
+          // 📊 Route info banner
+          Container(
+            width: double.infinity,
+            color: selectedStrategy == 'safest' ? Colors.green : 
+                   selectedStrategy == 'fastest' ? Colors.orange : Colors.blue,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                '${selectedStrategy.toUpperCase()} Route Selected',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
-          );
-        },
+            ),
+          ),
+
+          Expanded(
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: userLocation ?? LatLng(12.9716, 77.5946),
+                initialZoom: 13,
+                onTap: (tapPosition, latlng) async {
+                  if (userLocation == null) return;
+
+                  // Set destination first
+                  setState(() {
+                    destination = latlng;
+                  });
+
+                  // Show feedback
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('📍 Destination set! Calculating optimal route...'),
+                      backgroundColor: Colors.blueAccent,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+
+                  // 🤖 ML-powered route calculation
+                  calculateMLRoute(userLocation!, latlng, selectedStrategy);
+                },
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.safe_route_app',
+                ),
+
+                // 🛣 Show routes with strategy-specific colors
+                if (safestRoute != null && riskyRoute != null)
+                  PolylineLayer(
+                    polylines: [
+                      // 🟢 Selected route (green for safest, orange for fastest, blue for balanced)
+                      Polyline(
+                        points: selectedStrategy == 'safest' 
+                          ? safestRoute!['points'] as List<LatLng>
+                          : selectedStrategy == 'fastest'
+                            ? riskyRoute!['points'] as List<LatLng>
+                            : safestRoute!['points'] as List<LatLng>,
+                        strokeWidth: 6,
+                        color: selectedStrategy == 'safest' 
+                          ? Colors.green.withValues(alpha: 0.8)
+                          : selectedStrategy == 'fastest'
+                            ? Colors.orange.withValues(alpha: 0.8)
+                            : Colors.blue.withValues(alpha: 0.8),
+                      ),
+
+                      // 🔴 Alternative route for comparison (lighter color)
+                      Polyline(
+                        points: selectedStrategy == 'safest' 
+                          ? riskyRoute!['points'] as List<LatLng>
+                          : selectedStrategy == 'fastest'
+                            ? safestRoute!['points'] as List<LatLng>
+                            : riskyRoute!['points'] as List<LatLng>,
+                        strokeWidth: 3,
+                        color: Colors.grey.withValues(alpha: 0.5),
+                      ),
+                    ],
+                  ),
+
+                // 👤 User marker
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: userLocation ?? LatLng(12.9716, 77.5946),
+                      width: 40,
+                      height: 40,
+                      child: const Icon(
+                        Icons.person_pin_circle,
+                        color: Colors.blue,
+                        size: 40,
+                      ),
+                    ),
+                  ],
+                ),
+
+                // 🎯 Destination marker
+                if (destination != null)
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: destination!,
+                        width: 40,
+                        height: 40,
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                // 🔄 Loading indicator for ML route calculation
+                if (isMLRouteLoading)
+                  const Center(
+                    child: Card(
+                      color: Colors.white,
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 8),
+                            Text('Calculating optimal route...'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

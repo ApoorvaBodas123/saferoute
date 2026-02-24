@@ -1,0 +1,480 @@
+[  +29 ms] executing: sysctl hw.optional.arm64
+[   +3 ms] Exit code 0 from: sysctl hw.optional.arm64
+[        ] hw.optional.arm64: 1
+[   +3 ms] Artifact Instance of 'MaterialFonts' is not required, skipping update.
+[        ] Artifact Instance of 'GradleWrapper' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[        ] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterSdk' is not required, skipping update.
+[        ] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FontSubsetArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'PubDependencies' is not required, skipping update.
+[        ] executing: [/Users/apoorvabodas/Development/flutter/] git -c log.showSignature=false log HEAD -n 1 --pretty=format:%ad --date=iso
+[   +8 ms] Exit code 0 from: git -c log.showSignature=false log HEAD -n 1 --pretty=format:%ad --date=iso
+[        ] 2026-02-07 06:18:40 -0500
+[  +17 ms] executing: sysctl hw.optional.arm64
+[   +2 ms] Exit code 0 from: sysctl hw.optional.arm64
+[        ] hw.optional.arm64: 1
+[        ] executing: /usr/bin/arch -arm64e xcrun xcodebuild -version
+[ +107 ms] Exit code 0 from: /usr/bin/arch -arm64e xcrun xcodebuild -version
+[        ] Xcode 26.2
+           Build version 17C52
+[        ] executing: /usr/bin/arch -arm64e xcrun xcdevice list --timeout 5
+[   +1 ms] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterEngineStamp' is not required, skipping update.
+[        ] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
+[        ] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[  +20 ms] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterEngineStamp' is not required, skipping update.
+[   +2 ms] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[  +17 ms] executing: [/Users/apoorvabodas/Desktop/saferoute/frontend/] /Users/apoorvabodas/Development/flutter/bin/cache/dart-sdk/bin/dart pub --suppress-analytics --directory . get --example
+Resolving dependencies...
+Downloading packages...
+  flutter_map 6.2.1 (8.2.2 available)
+  js 0.6.7 (0.7.2 available)
+  location 5.0.3 (8.0.1 available)
+  location_platform_interface 3.1.2 (6.0.1 available)
+  location_web 4.2.0 (6.0.1 available)
+  meta 1.18.0 (1.18.1 available)
+  mgrs_dart 2.0.0 (3.0.0 available)
+  proj4dart 2.1.0 (3.0.0 available)
+  timezone 0.10.1 (0.11.0 available)
+  unicode 0.3.1 (1.1.9 available)
+Got dependencies!
+10 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+[ +612 ms] Found plugin speech_to_text at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/speech_to_text-7.3.0/
+[   +3 ms] Found plugin speech_to_text_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/speech_to_text_windows-1.0.0+beta.8/
+[   +3 ms] Found plugin shared_preferences at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences-2.5.4/
+[        ] Found plugin shared_preferences_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_windows-2.4.1/
+[   +1 ms] Found plugin path_provider_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_windows-2.3.0/
+[   +2 ms] Found plugin shared_preferences_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_web-2.4.3/
+[        ] Found plugin shared_preferences_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_linux-2.4.1/
+[        ] Found plugin path_provider_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_linux-2.2.1/
+[        ] Found plugin shared_preferences_foundation at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_foundation-2.5.6/
+[        ] Found plugin shared_preferences_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_android-2.4.20/
+[        ] Found plugin record at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record-6.2.0/
+[        ] Found plugin record_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_windows-1.0.7/
+[        ] Found plugin record_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_web-1.3.0/
+[        ] Found plugin record_macos at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_macos-1.2.1/
+[        ] Found plugin record_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_linux-1.3.0/
+[        ] Found plugin record_ios at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_ios-1.2.0/
+[   +1 ms] Found plugin record_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_android-1.5.1/
+[        ] Found plugin permission_handler at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler-12.0.1/
+[        ] Found plugin permission_handler_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_windows-0.2.1/
+[   +1 ms] Found plugin permission_handler_html at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_html-0.1.3+5/
+[        ] Found plugin permission_handler_apple at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_apple-9.4.7/
+[        ] Found plugin permission_handler_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_android-13.0.1/
+[        ] Found plugin path_provider at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider-2.1.5/
+[        ] Found plugin path_provider_foundation at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_foundation-2.6.0/
+[   +7 ms] Found plugin path_provider_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_android-2.2.22/
+[   +1 ms] Found plugin location at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/location-5.0.3/
+[        ] Found plugin location_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/location_web-4.2.0/
+[   +7 ms] Found plugin flutter_local_notifications at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications-20.1.0/
+[   +1 ms] Found plugin flutter_local_notifications_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications_windows-2.0.1/
+[   +1 ms] Found plugin flutter_local_notifications_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications_linux-7.0.0/
+[   +1 ms] Found plugin flutter_callkit_incoming at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_callkit_incoming-3.0.0/
+[  +18 ms] Found plugin speech_to_text at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/speech_to_text-7.3.0/
+[        ] Found plugin speech_to_text_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/speech_to_text_windows-1.0.0+beta.8/
+[   +1 ms] Found plugin shared_preferences at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences-2.5.4/
+[        ] Found plugin shared_preferences_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_windows-2.4.1/
+[        ] Found plugin path_provider_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_windows-2.3.0/
+[   +1 ms] Found plugin shared_preferences_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_web-2.4.3/
+[        ] Found plugin shared_preferences_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_linux-2.4.1/
+[        ] Found plugin path_provider_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_linux-2.2.1/
+[        ] Found plugin shared_preferences_foundation at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_foundation-2.5.6/
+[        ] Found plugin shared_preferences_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_android-2.4.20/
+[        ] Found plugin record at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record-6.2.0/
+[        ] Found plugin record_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_windows-1.0.7/
+[        ] Found plugin record_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_web-1.3.0/
+[        ] Found plugin record_macos at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_macos-1.2.1/
+[        ] Found plugin record_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_linux-1.3.0/
+[        ] Found plugin record_ios at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_ios-1.2.0/
+[        ] Found plugin record_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_android-1.5.1/
+[        ] Found plugin permission_handler at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler-12.0.1/
+[        ] Found plugin permission_handler_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_windows-0.2.1/
+[        ] Found plugin permission_handler_html at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_html-0.1.3+5/
+[        ] Found plugin permission_handler_apple at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_apple-9.4.7/
+[        ] Found plugin permission_handler_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_android-13.0.1/
+[        ] Found plugin path_provider at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider-2.1.5/
+[        ] Found plugin path_provider_foundation at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_foundation-2.6.0/
+[   +2 ms] Found plugin path_provider_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_android-2.2.22/
+[        ] Found plugin location at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/location-5.0.3/
+[        ] Found plugin location_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/location_web-4.2.0/
+[   +3 ms] Found plugin flutter_local_notifications at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications-20.1.0/
+[        ] Found plugin flutter_local_notifications_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications_windows-2.0.1/
+[        ] Found plugin flutter_local_notifications_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications_linux-7.0.0/
+[        ] Found plugin flutter_callkit_incoming at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_callkit_incoming-3.0.0/
+[   +6 ms] Skipping generating web_plugin_registrant.dart because it is up-to-date.
+[   +7 ms] Found plugin speech_to_text at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/speech_to_text-7.3.0/
+[        ] Found plugin speech_to_text_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/speech_to_text_windows-1.0.0+beta.8/
+[   +1 ms] Found plugin shared_preferences at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences-2.5.4/
+[        ] Found plugin shared_preferences_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_windows-2.4.1/
+[        ] Found plugin path_provider_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_windows-2.3.0/
+[   +1 ms] Found plugin shared_preferences_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_web-2.4.3/
+[        ] Found plugin shared_preferences_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_linux-2.4.1/
+[        ] Found plugin path_provider_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_linux-2.2.1/
+[        ] Found plugin shared_preferences_foundation at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_foundation-2.5.6/
+[        ] Found plugin shared_preferences_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_android-2.4.20/
+[        ] Found plugin record at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record-6.2.0/
+[        ] Found plugin record_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_windows-1.0.7/
+[        ] Found plugin record_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_web-1.3.0/
+[        ] Found plugin record_macos at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_macos-1.2.1/
+[        ] Found plugin record_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_linux-1.3.0/
+[        ] Found plugin record_ios at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_ios-1.2.0/
+[        ] Found plugin record_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_android-1.5.1/
+[        ] Found plugin permission_handler at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler-12.0.1/
+[        ] Found plugin permission_handler_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_windows-0.2.1/
+[        ] Found plugin permission_handler_html at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_html-0.1.3+5/
+[        ] Found plugin permission_handler_apple at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_apple-9.4.7/
+[        ] Found plugin permission_handler_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_android-13.0.1/
+[        ] Found plugin path_provider at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider-2.1.5/
+[        ] Found plugin path_provider_foundation at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_foundation-2.6.0/
+[   +1 ms] Found plugin path_provider_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_android-2.2.22/
+[        ] Found plugin location at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/location-5.0.3/
+[        ] Found plugin location_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/location_web-4.2.0/
+[   +2 ms] Found plugin flutter_local_notifications at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications-20.1.0/
+[        ] Found plugin flutter_local_notifications_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications_windows-2.0.1/
+[        ] Found plugin flutter_local_notifications_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications_linux-7.0.0/
+[        ] Found plugin flutter_callkit_incoming at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_callkit_incoming-3.0.0/
+[   +4 ms] Generating /Users/apoorvabodas/Desktop/saferoute/frontend/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+[        ] Skipping generating GeneratedPluginRegistrant.java because it is up-to-date.
+[   +1 ms] Skipping generating generated_plugin_registrant.h because it is up-to-date.
+[        ] Skipping generating generated_plugin_registrant.cc because it is up-to-date.
+[        ] Skipping generating generated_plugins.cmake because it is up-to-date.
+[        ] Skipping generating generated_plugin_registrant.h because it is up-to-date.
+[        ] Skipping generating generated_plugin_registrant.cc because it is up-to-date.
+[        ] Skipping generating generated_plugins.cmake because it is up-to-date.
+[        ] Skipping generating GeneratedPluginRegistrant.h because it is up-to-date.
+[        ] Skipping generating GeneratedPluginRegistrant.m because it is up-to-date.
+[        ] Skipping generating GeneratedPluginRegistrant.swift because it is up-to-date.
+[  +96 ms] Launching lib/main.dart on Chrome in debug mode...
+[  +36 ms] Initializing file store
+[   +5 ms] Skipping target: gen_localizations
+[        ] Skipping target: gen_dart_plugin_registrant
+[        ] Skipping target: _composite
+[        ] complete
+[        ] Updating assets
+[        ] runHooks() with {TargetFile: /Users/apoorvabodas/Desktop/saferoute/frontend/lib/main.dart, BuildMode: debug} and TargetPlatform.web_javascript
+[        ] runHooks() - will perform dart build
+[  +14 ms] : Checking 105 packages for hook/build.dart took 5 ms.
+[        ] Checking 105 packages for hook/build.dart took 5 ms.
+[        ] Building native assets for web.
+[  +21 ms] : input.json contents:
+           {
+             "assets": {},
+             "config": {
+               "build_asset_types": [],
+               "linking_enabled": false
+             },
+             "out_dir_shared": "/Users/apoorvabodas/Desktop/saferoute/frontend/.dart_tool/hooks_runner/shared/objective_c/build/",
+             "out_file": "/Users/apoorvabodas/Desktop/saferoute/frontend/.dart_tool/hooks_runner/objective_c/337ce265dc/output.json",
+             "package_name": "objective_c",
+             "package_root": "/Users/apoorvabodas/.pub-cache/hosted/pub.dev/objective_c-9.3.0/",
+             "user_defines": {}
+           }
+[        ] input.json contents:
+           {
+             "assets": {},
+             "config": {
+               "build_asset_types": [],
+               "linking_enabled": false
+             },
+             "out_dir_shared": "/Users/apoorvabodas/Desktop/saferoute/frontend/.dart_tool/hooks_runner/shared/objective_c/build/",
+             "out_file": "/Users/apoorvabodas/Desktop/saferoute/frontend/.dart_tool/hooks_runner/objective_c/337ce265dc/output.json",
+             "package_name": "objective_c",
+             "package_root": "/Users/apoorvabodas/.pub-cache/hosted/pub.dev/objective_c-9.3.0/",
+             "user_defines": {}
+           }
+[   +4 ms] : output.json contents:
+           {
+             "assets_for_linking": {},
+             "status": "success",
+             "timestamp": "2026-02-25 01:58:04.000"
+           }
+[        ] output.json contents:
+           {
+             "assets_for_linking": {},
+             "status": "success",
+             "timestamp": "2026-02-25 01:58:04.000"
+           }
+[   +1 ms] : Skipping build for objective_c in /Users/apoorvabodas/Desktop/saferoute/frontend/.dart_tool/hooks_runner/objective_c/337ce265dc/. Last build on 2026-02-25 01:58:04.000.
+[        ] Skipping build for objective_c in /Users/apoorvabodas/Desktop/saferoute/frontend/.dart_tool/hooks_runner/objective_c/337ce265dc/. Last build on 2026-02-25 01:58:04.000.
+[   +2 ms] Building native assets for web done.
+[        ] runHooks() - done
+[  +75 ms] Waiting for connection from debug service on Chrome...
+[  +15 ms] Found plugin speech_to_text at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/speech_to_text-7.3.0/
+[        ] Found plugin speech_to_text_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/speech_to_text_windows-1.0.0+beta.8/
+[   +1 ms] Found plugin shared_preferences at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences-2.5.4/
+[        ] Found plugin shared_preferences_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_windows-2.4.1/
+[        ] Found plugin path_provider_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_windows-2.3.0/
+[   +1 ms] Found plugin shared_preferences_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_web-2.4.3/
+[        ] Found plugin shared_preferences_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_linux-2.4.1/
+[        ] Found plugin path_provider_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_linux-2.2.1/
+[        ] Found plugin shared_preferences_foundation at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_foundation-2.5.6/
+[        ] Found plugin shared_preferences_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/shared_preferences_android-2.4.20/
+[        ] Found plugin record at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record-6.2.0/
+[        ] Found plugin record_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_windows-1.0.7/
+[        ] Found plugin record_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_web-1.3.0/
+[        ] Found plugin record_macos at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_macos-1.2.1/
+[        ] Found plugin record_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_linux-1.3.0/
+[        ] Found plugin record_ios at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_ios-1.2.0/
+[        ] Found plugin record_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/record_android-1.5.1/
+[        ] Found plugin permission_handler at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler-12.0.1/
+[        ] Found plugin permission_handler_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_windows-0.2.1/
+[        ] Found plugin permission_handler_html at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_html-0.1.3+5/
+[        ] Found plugin permission_handler_apple at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_apple-9.4.7/
+[        ] Found plugin permission_handler_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/permission_handler_android-13.0.1/
+[        ] Found plugin path_provider at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider-2.1.5/
+[        ] Found plugin path_provider_foundation at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_foundation-2.6.0/
+[   +1 ms] Found plugin path_provider_android at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/path_provider_android-2.2.22/
+[        ] Found plugin location at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/location-5.0.3/
+[        ] Found plugin location_web at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/location_web-4.2.0/
+[   +2 ms] Found plugin flutter_local_notifications at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications-20.1.0/
+[        ] Found plugin flutter_local_notifications_windows at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications_windows-2.0.1/
+[        ] Found plugin flutter_local_notifications_linux at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_local_notifications_linux-7.0.0/
+[        ] Found plugin flutter_callkit_incoming at /Users/apoorvabodas/.pub-cache/hosted/pub.dev/flutter_callkit_incoming-3.0.0/
+[  +13 ms] shaderc command: [/Users/apoorvabodas/Development/flutter/bin/cache/artifacts/engine/darwin-x64/impellerc, --sksl, --iplr, --json, --sl=build/flutter_assets/shaders/ink_sparkle.frag, --spirv=build/flutter_assets/shaders/ink_sparkle.frag.spirv, --input=/Users/apoorvabodas/Development/flutter/packages/flutter/lib/src/material/shaders/ink_sparkle.frag, --input-type=frag, --include=/Users/apoorvabodas/Development/flutter/packages/flutter/lib/src/material/shaders, --include=/Users/apoorvabodas/Development/flutter/bin/cache/artifacts/engine/darwin-x64/shader_lib]
+[        ] shaderc command: [/Users/apoorvabodas/Development/flutter/bin/cache/artifacts/engine/darwin-x64/impellerc, --sksl, --iplr, --json, --sl=build/flutter_assets/shaders/stretch_effect.frag, --spirv=build/flutter_assets/shaders/stretch_effect.frag.spirv, --input=/Users/apoorvabodas/Development/flutter/packages/flutter/lib/src/material/shaders/stretch_effect.frag, --input-type=frag, --include=/Users/apoorvabodas/Development/flutter/packages/flutter/lib/src/material/shaders, --include=/Users/apoorvabodas/Development/flutter/bin/cache/artifacts/engine/darwin-x64/shader_lib]
+[ +145 ms] <- reset
+[   +2 ms] /Users/apoorvabodas/Development/flutter/bin/cache/dart-sdk/bin/dartaotruntime /Users/apoorvabodas/Development/flutter/bin/cache/dart-sdk/bin/snapshots/frontend_server_aot.dart.snapshot --sdk-root /Users/apoorvabodas/Development/flutter/bin/cache/flutter_web_sdk/ --incremental --target=dartdevc --experimental-emit-debug-metadata -DFLUTTER_VERSION=3.41.0-1.0.pre-486 -DFLUTTER_CHANNEL=master -DFLUTTER_GIT_URL=https://github.com/flutter/flutter.git -DFLUTTER_FRAMEWORK_REVISION=010cd4f383 -DFLUTTER_ENGINE_REVISION=010cd4f383 -DFLUTTER_DART_VERSION=3.12.0 (build 3.12.0-127.0.dev) --output-dill /var/folders/13/n30g84t11cgd0xx385k9l27h0000gn/T/flutter_tools.vvO7tu/flutter_tool.u2avMr/app.dill --packages /Users/apoorvabodas/Desktop/saferoute/frontend/.dart_tool/package_config.json -Ddart.vm.profile=false -Ddart.vm.product=false --enable-asserts --track-widget-creation --filesystem-root /var/folders/13/n30g84t11cgd0xx385k9l27h0000gn/T/flutter_tools.vvO7tu/flutter_tools.RTdJ16 --filesystem-scheme org-dartlang-app --initialize-from-dill build/cfaa82821323cc7223e7333f05d2ecab.cache.dill.track.dill --platform file:///Users/apoorvabodas/Development/flutter/bin/cache/flutter_web_sdk/kernel/ddc_outline.dill --verbosity=error --dartdevc-canary --dartdevc-module-format=ddc
+[   +4 ms] <- compile org-dartlang-app:/web_entrypoint.dart
+[+1798 ms] lib/services/safety_service.dart:37:7: Error: No named parameter with the name 'initializationSettings'.
+[   +1 ms]       initializationSettings: initializationSettings,
+[        ]       ^^^^^^^^^^^^^^^^^^^^^^
+[+3031 ms] [
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPhone15,4",
+               "identifier" : "F2070CD1-08AD-4EBE-9012-643EA94D860E",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.iphone-15-1",
+               "modelName" : "iPhone 15",
+               "name" : "iPhone 15",
+               "ignored" : false
+             },
+             {
+               "ignored" : false,
+               "modelCode" : "Mac14,15",
+               "simulator" : false,
+               "modelName" : "MacBook Air",
+               "operatingSystemVersion" : "26.2 (25C56)",
+               "identifier" : "00008112-000D68D60ADA201E",
+               "platform" : "com.apple.platform.macosx",
+               "architecture" : "arm64e",
+               "interface" : "usb",
+               "available" : true,
+               "name" : "My Mac",
+               "modelUTI" : "com.apple.macbookair-15-2023"
+             },
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPad14,1",
+               "identifier" : "53B58A00-3BBC-42B0-97CD-E15DF095B389",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.ipad-mini6-1",
+               "modelName" : "iPad mini (6th generation)",
+               "name" : "iPad mini (6th generation)",
+               "ignored" : false
+             },
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPad13,18",
+               "identifier" : "A3828072-0114-4B19-BCBB-5602482636BA",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.ipad-10-1",
+               "modelName" : "iPad (10th generation)",
+               "name" : "iPad (10th generation)",
+               "ignored" : false
+             },
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPhone15,5",
+               "identifier" : "55F691C4-ADF6-4832-8051-2EEE5777660A",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.iphone-15-plus-1",
+               "modelName" : "iPhone 15 Plus",
+               "name" : "iPhone 15 Plus",
+               "ignored" : false
+             },
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPad14,11",
+               "identifier" : "438E92C0-6B68-4F2B-8016-8A3082926755",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.ipad-air-m2-13-1",
+               "modelName" : "iPad Air 13-inch (M2)",
+               "name" : "iPad Air 13-inch (M2)",
+               "ignored" : false
+             },
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPad14,9",
+               "identifier" : "2085BA45-1201-4E91-AB74-D61EFF5E206F",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.ipad-air-m2-1",
+               "modelName" : "iPad Air 11-inch (M2)",
+               "name" : "iPad Air 11-inch (M2)",
+               "ignored" : false
+             },
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPad16,4",
+               "identifier" : "8B44A698-1AF9-4D87-9F7D-5D6ADD640932",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.ipad-pro-m4-1",
+               "modelName" : "iPad Pro 11-inch (M4)",
+               "name" : "iPad Pro 11-inch (M4)",
+               "ignored" : false
+             },
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPhone16,2",
+               "identifier" : "C470B9B0-B0C5-458D-85B3-6A85297E3AE8",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.iphone-15-pro-max-1",
+               "modelName" : "iPhone 15 Pro Max",
+               "name" : "iPhone 15 Pro Max",
+               "ignored" : false
+             },
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPhone16,1",
+               "identifier" : "B9E34873-4123-43C2-A5D3-D0CEE645AD3B",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.iphone-15-pro-1",
+               "modelName" : "iPhone 15 Pro",
+               "name" : "iPhone 15 Pro",
+               "ignored" : false
+             },
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPad16,6",
+               "identifier" : "01253C75-825B-4103-A2FF-5363E7509FAF",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.ipad-pro-m4-13-1",
+               "modelName" : "iPad Pro 13-inch (M4)",
+               "name" : "iPad Pro 13-inch (M4)",
+               "ignored" : false
+             },
+             {
+               "simulator" : true,
+               "operatingSystemVersion" : "17.5 (21F79)",
+               "available" : true,
+               "platform" : "com.apple.platform.iphonesimulator",
+               "modelCode" : "iPhone14,6",
+               "identifier" : "16270B99-C868-4C44-9BE8-328E9578C4D1",
+               "architecture" : "arm64",
+               "modelUTI" : "com.apple.iphone-se3-1",
+               "modelName" : "iPhone SE (3rd generation)",
+               "name" : "iPhone SE (3rd generation)",
+               "ignored" : false
+             }
+           ]
+[+7640 ms] Waiting for connection from debug service on Chrome... (completed in 12.7s)
+[   +4 ms] Synced 0.0MB.
+[        ] Failed to compile application.
+[   +1 ms] "flutter run" took 13,841ms.
+[   +6 ms] executing: sw_vers -productName
+[  +29 ms] Exit code 0 from: sw_vers -productName
+[        ] macOS
+[        ] executing: sw_vers -productVersion
+[  +11 ms] Exit code 0 from: sw_vers -productVersion
+[        ] 26.2
+[        ] executing: sw_vers -buildVersion
+[   +8 ms] Exit code 0 from: sw_vers -buildVersion
+[        ] 25C56
+[        ] executing: uname -m
+[   +3 ms] Exit code 0 from: uname -m
+[        ] arm64
+[  +22 ms] 
+           #0      throwToolExit (package:flutter_tools/src/base/common.dart:34:3)
+           #1      RunCommand.runCommand (package:flutter_tools/src/commands/run.dart:924:9)
+           <asynchronous suspension>
+           #2      FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1592:27)
+           <asynchronous suspension>
+           #3      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #4      CommandRunner.runCommand (package:args/command_runner.dart:212:13)
+           <asynchronous suspension>
+           #5      FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:496:9)
+           <asynchronous suspension>
+           #6      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #7      FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:431:5)
+           <asynchronous suspension>
+           #8      FlutterCommandRunner.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:307:33)
+           <asynchronous suspension>
+           #9      run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:104:11)
+           <asynchronous suspension>
+           #10     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #11     main (package:flutter_tools/executable.dart:103:3)
+           <asynchronous suspension>
+
+
+[        ] Running 3 shutdown hooks
+[   +3 ms] Shutdown hooks complete
+[  +54 ms] exiting with code 1
