@@ -162,5 +162,3 @@ flutter run
 - Dynamic risk assessment  
 - Intelligent route optimization
 - Real-time mobile application
-
-This is now a **complete Machine Learning project** suitable for academic or professional portfolios, demonstrating end-to-end ML implementation from data processing to mobile deployment.
