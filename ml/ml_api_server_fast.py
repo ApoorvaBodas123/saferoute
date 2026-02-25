@@ -8,12 +8,12 @@ import random
 app = Flask(__name__)
 CORS(app)
 
-# Bangalore city center coordinates
+
 BANGALORE_CENTER = (12.9716, 77.5946)
 
 def haversine_distance(lat1, lon1, lat2, lon2):
-    """Calculate the great circle distance between two points on earth"""
-    R = 6371  # Earth radius in kilometers
+    
+    R = 6371 
     
     lat1_rad = math.radians(lat1)
     lon1_rad = math.radians(lon1)
@@ -29,18 +29,18 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     return R * c
 
 def calculate_fallback_risk(lat, lon):
-    """Calculate fallback risk score based on time and location"""
+    
     hour = datetime.now().hour
     is_night = hour >= 22 or hour < 6
     is_evening = hour >= 18 and hour < 22
     
-    # Base risk calculation
+    
     base_risk = 3.0
     
-    # Time-based adjustments
+   
     temporal_multiplier = 1.5 if is_night else 1.2 if is_evening else 1.0
     
-    # Distance from center (simplified)
+    
     distance_from_center = haversine_distance(lat, lon, BANGALORE_CENTER[0], BANGALORE_CENTER[1])
     spatial_multiplier = 1.3 if distance_from_center < 5 else 1.1 if distance_from_center < 10 else 1.0
     
@@ -58,19 +58,17 @@ def calculate_fallback_risk(lat, lon):
     }
 
 def calculate_fallback_route(start_lat, start_lon, end_lat, end_lon, strategy):
-    """Get realistic route using Bangalore road network"""
     
-    # Bangalore's major roads (approximate coordinates)
     if strategy == 'safest':
-        # Safest: Use main highways, take a wide berth via major roads
+     
         route_coords = [
             [start_lat, start_lon],
-            # Move towards a major arterial road (wide offset)
+            
             [start_lat + 0.02, start_lon + 0.02],
-            # Follow a safe, well-lit major route
+            
             [(start_lat + end_lat) / 2 + 0.03, (start_lon + end_lon) / 2 + 0.03],
             [end_lat + 0.02, end_lon + 0.02],
-            # Final approach to destination
+            
             [end_lat, end_lon]
         ]
         distance_multiplier = 1.4
@@ -78,30 +76,30 @@ def calculate_fallback_route(start_lat, start_lon, end_lat, end_lon, strategy):
         roads_used = ['Major Highways', 'Well-lit Arterial Roads']
         
     elif strategy == 'fastest':
-        # Fastest: Direct but realistic, potentially riskier smaller roads
+        
         route_coords = [
             [start_lat, start_lon],
-            # Take a direct, aggressive diagonal approach
+           
             [start_lat - 0.015, start_lon + 0.015],
-            # Cut straight across
+            
             [(start_lat + end_lat) / 2 - 0.02, (start_lon + end_lon) / 2 + 0.02],
             [end_lat - 0.015, end_lon + 0.015],
-            # Final approach
+           
             [end_lat, end_lon]
         ]
         distance_multiplier = 1.1
         risk_score = 6.5
         roads_used = ['Direct Inner Roads', 'Shortcuts']
         
-    else:  # balanced
-        # Balanced: Mix of major roads and moderate shortcuts (middle path)
+    else:  
+        
         route_coords = [
             [start_lat, start_lon],
-            # Follow moderate road pattern entirely different from safely/fastest
+           
             [start_lat + 0.01, start_lon - 0.01],
-            # Take balanced central approach
+            
             [(start_lat + end_lat) / 2, (start_lon + end_lon) / 2],
-            # Continue with road-like path
+            
             [end_lat + 0.01, end_lon - 0.01],
             [end_lat, end_lon]
         ]
@@ -109,19 +107,19 @@ def calculate_fallback_route(start_lat, start_lon, end_lat, end_lon, strategy):
         risk_score = 4.0
         roads_used = ['Mixed Roads', 'Standard Routes']
     
-    # Calculate distance
+   
     base_distance = haversine_distance(start_lat, start_lon, end_lat, end_lon)
     total_distance = base_distance * distance_multiplier
     
-    # Calculate estimated time
+   
     if strategy == 'safest':
-        avg_speed = 25  # km/h (slower on major roads)
+        avg_speed = 25 
     elif strategy == 'fastest':
-        avg_speed = 35  # km/h (faster on direct roads)
+        avg_speed = 35  
     else:
-        avg_speed = 30  # km/h (moderate speed)
+        avg_speed = 30 
     
-    estimated_time = (total_distance / avg_speed) * 60  # minutes
+    estimated_time = (total_distance / avg_speed) * 60  
     
     return {
         'route_coordinates': route_coords,
@@ -194,7 +192,7 @@ def optimize_route():
 @app.route('/api/crime-trends', methods=['GET'])
 def get_crime_trends():
     try:
-        # Mock crime trends data
+       
         trends = {
             'daily_trends': [
                 {'date': '2024-02-20', 'incidents': 45},

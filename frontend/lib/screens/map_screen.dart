@@ -104,7 +104,7 @@ class _MapScreenState extends State<MapScreen> {
         
         processedMainRoute = await RouteService.getSnappedRoute(rawPoints);
         
-        // Prepare display variables based on strategy
+       
         if (strategy == 'safest') {
           newSafestRoute = {
             'points': processedMainRoute,
@@ -147,7 +147,7 @@ class _MapScreenState extends State<MapScreen> {
             'distance': 3.5,
             'duration': 8.4,
           };
-        } else { // balanced
+        } else { 
           newSafestRoute = {
             'points': processedMainRoute,
             'risk_score': result['total_risk_score'] ?? 4.0,
@@ -171,7 +171,7 @@ class _MapScreenState extends State<MapScreen> {
         }
       }
 
-      // Update state synchronously
+      
       setState(() {
         mlRouteResult = result;
         isMLRouteLoading = false;
@@ -187,7 +187,7 @@ class _MapScreenState extends State<MapScreen> {
         isMLRouteLoading = false;
       });
       
-      // Fallback to simple route
+      
       final routePoints = [
         start,
         LatLng((start.latitude + end.latitude) / 2, (start.longitude + end.longitude) / 2),
@@ -221,7 +221,7 @@ class _MapScreenState extends State<MapScreen> {
         title: const Text('Safe Route App (ML-Powered)'),
         backgroundColor: isSafetyModeActive ? Colors.red.shade800 : Colors.blueAccent,
         actions: [
-          // Safety Mode Button
+         
           IconButton(
             icon: Icon(
               isSafetyModeActive ? Icons.shield : Icons.shield_outlined,
@@ -249,7 +249,7 @@ class _MapScreenState extends State<MapScreen> {
               );
             },
           ),
-          // Profile button
+  
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
@@ -260,14 +260,14 @@ class _MapScreenState extends State<MapScreen> {
               );
             },
           ),
-          // Strategy selector
+
           PopupMenuButton<String>(
             icon: const Icon(Icons.settings),
             onSelected: (String strategy) {
               setState(() {
                 selectedStrategy = strategy;
               });
-              // Recalculate route if destination exists
+            
               if (destination != null && userLocation != null) {
                 calculateMLRoute(userLocation!, destination!, strategy);
               }
@@ -299,7 +299,7 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Column(
         children: [
-          // 📊 Route info banner
+        
           Container(
             width: double.infinity,
             color: selectedStrategy == 'safest' ? Colors.green : 
@@ -331,7 +331,7 @@ class _MapScreenState extends State<MapScreen> {
                     destination = latlng;
                   });
 
-                  // Show feedback
+                 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('📍 Destination set! Calculating optimal route...'),
@@ -340,7 +340,7 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   );
 
-                  // 🤖 ML-powered route calculation
+                  
                   calculateMLRoute(userLocation!, latlng, selectedStrategy);
                 },
               ),
@@ -355,7 +355,7 @@ class _MapScreenState extends State<MapScreen> {
                 if (safestRoute != null && riskyRoute != null)
                   PolylineLayer(
                     polylines: [
-                      // 🟢 Selected route (green for safest, orange for fastest, blue for balanced)
+                      
                       Polyline(
                         points: selectedStrategy == 'safest' 
                           ? safestRoute!['points'] as List<LatLng>
@@ -370,7 +370,7 @@ class _MapScreenState extends State<MapScreen> {
                             : Colors.blue.withValues(alpha: 0.8),
                       ),
 
-                      // 🔴 Alternative route for comparison (lighter color)
+                     
                       Polyline(
                         points: selectedStrategy == 'safest' 
                           ? riskyRoute!['points'] as List<LatLng>
@@ -383,7 +383,7 @@ class _MapScreenState extends State<MapScreen> {
                     ],
                   ),
 
-                // 👤 User marker
+             
                 MarkerLayer(
                   markers: [
                     Marker(
@@ -399,7 +399,7 @@ class _MapScreenState extends State<MapScreen> {
                   ],
                 ),
 
-                // 🎯 Destination marker
+               
                 if (destination != null)
                   MarkerLayer(
                     markers: [

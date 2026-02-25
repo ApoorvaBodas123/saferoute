@@ -13,14 +13,14 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class ModelEvaluator:
-    """Comprehensive model evaluation and validation system"""
+    
     
     def __init__(self):
         self.load_models()
         self.evaluation_results = {}
         
     def load_models(self):
-        """Load all trained models"""
+      
         try:
             self.classification_model = joblib.load("./models/ensemble_model.pkl")
             self.time_series_model = joblib.load("./models/time_series_rf_model.pkl")
@@ -32,40 +32,40 @@ class ModelEvaluator:
             print(f"❌ Error loading models: {e}")
     
     def evaluate_classification_model(self):
-        """Evaluate the crime classification model"""
+        
         
         print("🔍 Evaluating Classification Model...")
         
-        # Load test data
+      
         data = pd.read_csv("./data/ml_enhanced_crime_data.csv")
         X = data[self.feature_columns]
         y = data['is_high_risk']
         
-        # Split data
+
         from sklearn.model_selection import train_test_split
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42, stratify=y
         )
         
-        # Make predictions
+        
         y_pred = self.classification_model.predict(X_test)
         y_proba = self.classification_model.predict_proba(X_test)[:, 1]
         
-        # Calculate metrics
+        
         accuracy = np.mean(y_pred == y_test)
         auc_score = roc_auc_score(y_test, y_proba)
         avg_precision = average_precision_score(y_test, y_proba)
         
-        # Cross-validation
+        
         cv_scores = cross_val_score(self.classification_model, X_train, y_train, cv=5, scoring='roc_auc')
         
-        # Classification report
+    
         class_report = classification_report(y_test, y_pred, output_dict=True)
         
-        # Confusion matrix
+        
         cm = confusion_matrix(y_test, y_pred)
         
-        # Store results
+        
         self.evaluation_results['classification'] = {
             'accuracy': accuracy,
             'auc_score': auc_score,
@@ -84,26 +84,26 @@ class ModelEvaluator:
         return self.evaluation_results['classification']
     
     def evaluate_time_series_model(self):
-        """Evaluate the time series prediction model"""
+        
         
         print("🔍 Evaluating Time Series Model...")
         
         try:
-            # Load time series data
+            
             ts_data = self._prepare_time_series_data()
             
             if len(ts_data) < 100:
                 print("⚠️ Insufficient time series data for evaluation")
                 return None
             
-            # Use only available features
+            
             available_features = [col for col in self.ts_features if col in ts_data.columns]
             
             if len(available_features) < 5:
                 print("⚠️ Insufficient features for time series evaluation")
                 return None
             
-            # Split data
+           
             train_size = int(len(ts_data) * 0.8)
             train_data = ts_data[:train_size]
             test_data = ts_data[train_size:]
@@ -113,19 +113,19 @@ class ModelEvaluator:
             X_test = test_data[available_features]
             y_test = test_data['high_risk_count']
             
-            # Make predictions
+            
             y_pred = self.time_series_model.predict(X_test)
             
-            # Calculate metrics
+            
             mse = mean_squared_error(y_test, y_pred)
             mae = mean_absolute_error(y_test, y_pred)
             rmse = np.sqrt(mse)
             r2 = r2_score(y_test, y_pred)
             
-            # MAPE (Mean Absolute Percentage Error)
+           
             mape = np.mean(np.abs((y_test - y_pred) / np.maximum(y_test, 1))) * 100
             
-            # Store results
+           
             self.evaluation_results['time_series'] = {
                 'mse': mse,
                 'mae': mae,
@@ -149,14 +149,14 @@ class ModelEvaluator:
         return self.evaluation_results.get('time_series')
     
     def evaluate_route_optimization(self):
-        """Evaluate route optimization performance"""
+        
         
         print("🔍 Evaluating Route Optimization...")
         
         try:
             route_optimizer = joblib.load("./models/ml_route_optimizer.pkl")
             
-            # Test route optimization on known routes
+           
             test_routes = [
                 (12.9762, 77.6033, 12.8452, 77.6770),  # MG Road to Electronic City
                 (12.9784, 77.6408, 12.9279, 77.6271),  # Indiranagar to Koramangala
@@ -176,7 +176,7 @@ class ModelEvaluator:
                         'balanced_score': comparison['recommendations']['balanced']['avg_risk_score'] * comparison['recommendations']['balanced']['distance_km']
                     })
             
-            # Calculate average metrics
+           
             if route_results:
                 avg_alternatives = np.mean([r['alternatives_found'] for r in route_results])
                 avg_risk_improvement = np.mean([
@@ -202,14 +202,14 @@ class ModelEvaluator:
         return self.evaluation_results.get('route_optimization')
     
     def _prepare_time_series_data(self):
-        """Prepare time series data for evaluation"""
+
         try:
-            # Load and prepare time series data (similar to step 3)
+           
             data = pd.read_csv("./data/ml_enhanced_crime_data.csv")
             data['Datetime'] = pd.to_datetime(data['Datetime'])
             data = data.sort_values('Datetime')
             
-            # Create hourly aggregates
+           
             temp_data = data.copy()
             temp_data['date'] = temp_data['Datetime'].dt.date
             temp_data['hour'] = temp_data['Datetime'].dt.hour
@@ -223,18 +223,18 @@ class ModelEvaluator:
             hourly_crime['datetime'] = pd.to_datetime(hourly_crime['date'].astype(str) + ' ' + hourly_crime['hour'].astype(str) + ':00:00')
             hourly_crime = hourly_crime.set_index('datetime')
             
-            # Add features (simplified)
+            
             hourly_crime['hour_sin'] = np.sin(2 * np.pi * hourly_crime['hour'] / 24)
             hourly_crime['hour_cos'] = np.cos(2 * np.pi * hourly_crime['hour'] / 24)
             hourly_crime['day_of_week'] = hourly_crime.index.dayofweek
             hourly_crime['day_sin'] = np.sin(2 * np.pi * hourly_crime['day_of_week'] / 7)
             hourly_crime['day_cos'] = np.cos(2 * np.pi * hourly_crime['day_of_week'] / 7)
             
-            # Add lag features
+           
             for lag in [1, 2, 3, 6, 12, 24]:
                 hourly_crime[f'high_risk_lag_{lag}'] = hourly_crime['high_risk_count'].shift(lag)
             
-            # Add rolling features
+            
             for window in [3, 6, 12]:
                 hourly_crime[f'high_risk_rolling_{window}'] = hourly_crime['high_risk_count'].rolling(window=window).mean()
             
@@ -246,7 +246,7 @@ class ModelEvaluator:
             return pd.DataFrame()
     
     def _get_feature_importance(self):
-        """Get feature importance from classification model"""
+        
         try:
             if hasattr(self.classification_model, 'feature_importances_'):
                 importance_dict = dict(zip(self.feature_columns, self.classification_model.feature_importances_))
@@ -257,33 +257,33 @@ class ModelEvaluator:
             return {}
     
     def generate_evaluation_report(self):
-        """Generate comprehensive evaluation report"""
+        
         
         print("\n📊 GENERATING COMPREHENSIVE EVALUATION REPORT")
         print("=" * 60)
         
-        # Evaluate all models
+        
         self.evaluate_classification_model()
         self.evaluate_time_series_model()
         self.evaluate_route_optimization()
         
-        # Generate report
+        
         report = {
             'evaluation_timestamp': pd.Timestamp.now().isoformat(),
             'model_performance': self.evaluation_results,
             'summary': self._generate_summary()
         }
         
-        # Save report
+       
         joblib.dump(report, "./models/evaluation_report.pkl")
         
-        # Print summary
+      
         self._print_summary()
         
         return report
     
     def _generate_summary(self):
-        """Generate performance summary"""
+        
         
         summary = {
             'classification_grade': self._calculate_grade('classification'),
@@ -292,7 +292,7 @@ class ModelEvaluator:
             'overall_assessment': 'Good'
         }
         
-        # Determine overall assessment
+        
         grades = [summary['classification_grade'], summary['time_series_grade'], summary['route_optimization_grade']]
         if all(grade in ['A', 'A+', 'B'] for grade in grades):
             summary['overall_assessment'] = 'Excellent'
@@ -304,7 +304,7 @@ class ModelEvaluator:
         return summary
     
     def _calculate_grade(self, model_type):
-        """Calculate performance grade for a model"""
+       
         
         if model_type not in self.evaluation_results:
             return 'N/A'
@@ -353,7 +353,7 @@ class ModelEvaluator:
         return 'N/A'
     
     def _print_summary(self):
-        """Print evaluation summary"""
+        
         
         print("\n🎯 PERFORMANCE SUMMARY")
         print("-" * 30)
@@ -375,16 +375,15 @@ class ModelEvaluator:
         print(f"\n🏆 Overall Assessment: {self._generate_summary()['overall_assessment']}")
     
     def create_performance_visualizations(self):
-        """Create performance visualization charts"""
+       
         
         print("📈 Creating performance visualizations...")
         
         try:
-            # Classification model performance
+           
             if 'classification' in self.evaluation_results:
                 self._plot_classification_metrics()
-            
-            # Feature importance
+           
             if 'classification' in self.evaluation_results:
                 self._plot_feature_importance()
             
@@ -394,13 +393,13 @@ class ModelEvaluator:
             print(f"❌ Error creating visualizations: {e}")
     
     def _plot_classification_metrics(self):
-        """Plot classification model metrics"""
+       
         
         import matplotlib.pyplot as plt
         
         results = self.evaluation_results['classification']
         
-        # Create confusion matrix heatmap
+        
         cm = np.array(results['confusion_matrix'])
         
         plt.figure(figsize=(8, 6))
@@ -415,7 +414,7 @@ class ModelEvaluator:
         plt.close()
     
     def _plot_feature_importance(self):
-        """Plot feature importance"""
+       
         
         import matplotlib.pyplot as plt
         
@@ -423,7 +422,7 @@ class ModelEvaluator:
         importance = results['feature_importance']
         
         if importance:
-            # Get top 10 features
+            
             top_features = dict(list(importance.items())[:10])
             
             plt.figure(figsize=(10, 6))
@@ -438,21 +437,21 @@ class ModelEvaluator:
             plt.close()
 
 def run_comprehensive_evaluation():
-    """Run comprehensive model evaluation"""
+    
     
     print("🚀 Starting Comprehensive Model Evaluation...")
     
-    # Create plots directory
+  
     import os
     os.makedirs("./models/plots", exist_ok=True)
     
-    # Initialize evaluator
+    
     evaluator = ModelEvaluator()
     
-    # Generate evaluation report
+   
     report = evaluator.generate_evaluation_report()
     
-    # Create visualizations
+  
     evaluator.create_performance_visualizations()
     
     print("\n🎉 Comprehensive Evaluation Complete!")
@@ -462,5 +461,5 @@ def run_comprehensive_evaluation():
     return report
 
 if __name__ == "__main__":
-    # Run comprehensive evaluation
+  
     evaluation_report = run_comprehensive_evaluation()

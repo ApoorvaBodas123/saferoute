@@ -93,11 +93,11 @@ extension SafetyLevelExtension on SafetyLevel {
   double get riskMultiplier {
     switch (this) {
       case SafetyLevel.conservative:
-        return 0.7;  // Prefer safer routes
+        return 0.7;  
       case SafetyLevel.moderate:
-        return 1.0;  // Balanced approach
+        return 1.0;  
       case SafetyLevel.adventurous:
-        return 1.3;  // Prefer faster routes
+        return 1.3;  
     }
   }
 }

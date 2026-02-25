@@ -13,14 +13,14 @@ import warnings
 warnings.filterwarnings('ignore')
 
 def train_crime_classification_models():
-    """Train multiple ML models for crime classification"""
+   
     
     print("🚀 Training ML Models for Crime Classification...")
     
-    # Load enhanced data
+    
     data = pd.read_csv("./data/ml_enhanced_crime_data.csv")
     
-    # Feature columns
+   
     feature_columns = [
         'hour', 'day_of_week', 'day_of_month', 'month', 'quarter', 'is_weekend',
         'is_morning', 'is_afternoon', 'is_evening', 'is_night',
@@ -33,7 +33,7 @@ def train_crime_classification_models():
     y_classification = data['is_high_risk']
     y_regression = data['risk_score']
     
-    # Split data
+    
     X_train, X_test, y_train_cls, y_test_cls = train_test_split(
         X, y_classification, test_size=0.2, random_state=42, stratify=y_classification
     )
@@ -41,7 +41,7 @@ def train_crime_classification_models():
         X, y_regression, test_size=0.2, random_state=42
     )
     
-    # Scale features
+    
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
@@ -49,7 +49,7 @@ def train_crime_classification_models():
     print(f"📊 Training data shape: {X_train.shape}")
     print(f"🎯 High risk in training: {y_train_cls.mean():.2%}")
     
-    # Initialize models
+   
     models = {
         'RandomForest': RandomForestClassifier(
             n_estimators=100, max_depth=10, random_state=42, class_weight='balanced'
@@ -65,7 +65,7 @@ def train_crime_classification_models():
         )
     }
     
-    # Train and evaluate models
+    
     results = {}
     best_model = None
     best_score = 0
@@ -73,7 +73,7 @@ def train_crime_classification_models():
     for name, model in models.items():
         print(f"\n🔧 Training {name}...")
         
-        # Train model
+        
         if name == 'SVM':
             model.fit(X_train_scaled, y_train_cls)
             y_pred = model.predict(X_test_scaled)
@@ -83,7 +83,7 @@ def train_crime_classification_models():
             y_pred = model.predict(X_test)
             y_proba = model.predict_proba(X_test)[:, 1]
         
-        # Evaluate
+        
         accuracy = accuracy_score(y_test_cls, y_pred)
         auc_score = roc_auc_score(y_test_cls, y_proba)
         cv_scores = cross_val_score(model, X_train, y_train_cls, cv=5, scoring='roc_auc')
@@ -107,7 +107,7 @@ def train_crime_classification_models():
     
     print(f"\n🏆 Best model: {best_model_name} (AUC: {best_score:.4f})")
     
-    # Create ensemble model
+    
     print("\n🔧 Creating Ensemble Model...")
     ensemble = VotingClassifier(
         estimators=[
@@ -128,7 +128,7 @@ def train_crime_classification_models():
     print(f"   ✅ Ensemble Accuracy: {ensemble_accuracy:.4f}")
     print(f"   ✅ Ensemble AUC: {ensemble_auc:.4f}")
     
-    # Feature importance analysis
+    
     if hasattr(best_model, 'feature_importances_'):
         feature_importance = pd.DataFrame({
             'feature': feature_columns,
@@ -138,15 +138,15 @@ def train_crime_classification_models():
         print("\n📊 Top 10 Important Features:")
         print(feature_importance.head(10))
         
-        # Save feature importance
+        
         feature_importance.to_csv("./models/feature_importance.csv", index=False)
     
-    # Save models
+    
     joblib.dump(best_model, "./models/best_classification_model.pkl")
     joblib.dump(ensemble, "./models/ensemble_model.pkl")
     joblib.dump(scaler, "./models/feature_scaler.pkl")
     
-    # Save feature list
+    
     joblib.dump(feature_columns, "./models/feature_columns.pkl")
     
     print("\n💾 Models saved successfully!")
@@ -154,7 +154,7 @@ def train_crime_classification_models():
     return results, ensemble, feature_columns
 
 def evaluate_model_performance(model, X_test, y_test, model_name="Model"):
-    """Detailed model evaluation"""
+    
     y_pred = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:, 1]
     
@@ -170,14 +170,14 @@ def evaluate_model_performance(model, X_test, y_test, model_name="Model"):
 if __name__ == "__main__":
     results, ensemble_model, features = train_crime_classification_models()
     
-    # Load test data for final evaluation
+    
     data = pd.read_csv("./data/ml_enhanced_crime_data.csv")
     X = data[features]
     y = data['is_high_risk']
     
     _, X_test, _, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # Final evaluation
+    
     evaluate_model_performance(ensemble_model, X_test, y_test, "Ensemble Model")
     
     print(f"\n🎉 ML Training Complete! Best ensemble AUC: {results['GradientBoosting']['auc']:.4f}")

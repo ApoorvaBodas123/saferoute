@@ -1,16 +1,16 @@
-#!/usr/bin/env python3
+
 import subprocess
 import time
 import sys
 import os
 
 def start_ml_api():
-    """Start ML API server with auto-restart"""
+   
     print("🚀 Starting ML API Server with auto-restart...")
     
     while True:
         try:
-            # Start the server
+           
             proc = subprocess.Popen([
                 sys.executable, 
                 'ml_api_server_fast.py'
@@ -20,7 +20,7 @@ def start_ml_api():
             print("🌐 Running on http://localhost:8000")
             print("🔄 Auto-restart enabled - will restart if server crashes")
             
-            # Wait for process to complete
+           
             proc.wait()
             
             print("❌ ML API Server stopped, restarting in 3 seconds...")
