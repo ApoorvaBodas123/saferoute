@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/user_profile.dart';
-import '../services/route_analytics.dart';
+import '../services/auth_service.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -10,117 +10,138 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  UserProfile? _profile;
-  Map<String, dynamic>? _analytics;
-  bool _isLoading = true;
+  Map<String, dynamic>? _user;
 
   @override
   void initState() {
     super.initState();
-    _loadProfileAndAnalytics();
+    _loadUser();
   }
 
-  Future<void> _loadProfileAndAnalytics() async {
-    final profile = await UserProfile.loadProfile();
-    final history = await RouteAnalytics.getRouteHistory();
-    final analytics = RouteAnalytics.getSafetyStats(history);
-
+  Future<void> _loadUser() async {
+    final user = await AuthService.getCurrentUser();
     setState(() {
-      _profile = profile ?? UserProfile(
-        name: 'Guest User',
-        email: 'guest@example.com',
-      );
-      _analytics = analytics;
-      _isLoading = false;
+      _user = user;
     });
+  }
+
+  void _logout() async {
+    await AuthService.logout();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Safety Profile'),
-        backgroundColor: Colors.blueAccent,
-      ),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile Section
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+            // Top Pink Curve
+            CustomPaint(
+              painter: ProfileTopWavePainter(),
+              child: Container(
+                width: double.infinity,
+                height: 250,
+                alignment: Alignment.center,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      'User Profile',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      'Profile',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    _buildProfileField('Name', _profile!.name),
-                    _buildProfileField('Email', _profile!.email),
-                    _buildProfileField('Risk Tolerance', _profile!.riskTolerance.displayName),
+                    const SizedBox(height: 20),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                          )
+                        ]
+                      ),
+                      child: const CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.white,
+                        child: Icon(Icons.person, size: 50, color: Color(0xFFFD6296)),
+                       // In a real app we'd load the avatar image here
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 30),
             
-            // Analytics Section
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Safety Analytics',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            // Name Field
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Name', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    const SizedBox(height: 16),
-                    _buildAnalyticsRow('Total Routes', '${_analytics!['totalRoutes']}'),
-                    _buildAnalyticsRow('Average Risk Score', '${_analytics!['avgRiskScore'].toStringAsFixed(2)}'),
-                    _buildAnalyticsRow('Total Distance', '${_analytics!['totalDistance'].toStringAsFixed(1)} km'),
-                    _buildAnalyticsRow('Most Used Strategy', '${_analytics!['mostUsedStrategy']}'),
-                    if (_analytics!['safestRoute'] != null)
-                      _buildAnalyticsRow('Safest Route Risk', '${_analytics!['safestRoute'].riskScore.toStringAsFixed(2)}'),
-                  ],
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Settings Section
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Safety Settings',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    child: Text(
+                      _user?['name'] ?? 'Loading...',
+                      style: const TextStyle(fontSize: 16),
                     ),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      leading: const Icon(Icons.security),
-                      title: const Text('Risk Tolerance'),
-                      subtitle: Text(_profile!.riskTolerance.displayName),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: _showRiskToleranceDialog,
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Email Field
+                  const Text('Email', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                  ],
-                ),
+                    child: Text(
+                      _user?['email'] ?? 'Loading...',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Logout Button
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: _logout,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFD6296),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      ),
+                      child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  )
+                ],
               ),
             ),
           ],
@@ -128,85 +149,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+}
 
-  Widget _buildProfileField(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-          Expanded(
-            child: Text(value),
-          ),
-        ],
-      ),
-    );
+class ProfileTopWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = const Color(0xFFFD4F8A)
+      ..style = PaintingStyle.fill;
+      
+    var path = Path();
+    path.moveTo(0, 0);
+    path.lineTo(0, size.height * 0.7);
+    path.quadraticBezierTo(
+        size.width * 0.5, size.height + 30, size.width, size.height * 0.7);
+    path.lineTo(size.width, 0);
+    path.close();
+    canvas.drawPath(path, paint);
   }
 
-  Widget _buildAnalyticsRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.blueAccent,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRiskToleranceDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Risk Tolerance'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: SafetyLevel.values.map((level) {
-              return RadioListTile<SafetyLevel>(
-                title: Text(level.displayName),
-                value: level,
-                // ignore: deprecated_member_use
-                groupValue: _profile!.riskTolerance,
-                // ignore: deprecated_member_use
-                onChanged: (SafetyLevel? value) {
-                  setState(() {
-                    _profile = UserProfile(
-                      name: _profile!.name,
-                      email: _profile!.email,
-                      riskTolerance: value!,
-                      preferredAreas: _profile!.preferredAreas,
-                      avoidedAreas: _profile!.avoidedAreas,
-                      usualTravelStart: _profile!.usualTravelStart,
-                      usualTravelEnd: _profile!.usualTravelEnd,
-                    );
-                    UserProfile.saveProfile(_profile!);
-                  });
-                  Navigator.of(context).pop();
-                },
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }

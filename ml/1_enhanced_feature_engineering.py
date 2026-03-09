@@ -8,24 +8,19 @@ import warnings
 warnings.filterwarnings('ignore')
 
 def enhanced_feature_engineering():
-    
     print("🔄 Loading and preprocessing data...")
     data = pd.read_csv("./data/SouthCrimeDetails.csv")
-    
     
     data = data[['Type', 'Date', 'Time', 'Latitude', 'Longitude']]
     data.dropna(inplace=True)
     data.drop_duplicates(inplace=True)
     
-    
     data['Latitude'] = pd.to_numeric(data['Latitude'], errors='coerce')
     data['Longitude'] = pd.to_numeric(data['Longitude'], errors='coerce')
     data.dropna(inplace=True)
     
-   
     data['Datetime'] = pd.to_datetime(data['Date'] + ' ' + data['Time'], errors='coerce')
     data = data.dropna(subset=['Datetime'])
-    
     
     data['hour'] = data['Datetime'].dt.hour
     data['day_of_week'] = data['Datetime'].dt.dayofweek
@@ -69,12 +64,10 @@ def enhanced_feature_engineering():
         lambda row: haversine_distance(row['Latitude'], row['Longitude'], 12.9716, 77.5946), 
         axis=1
     )
-    
-    
+     
     le = LabelEncoder()
     data['crime_type_encoded'] = le.fit_transform(data['Type'])
-    
-    
+       
     crime_severity_map = {
         'MURDER': 10, 'RAPE': 9, 'KIDNAPPING': 8, 'ROBBERY': 7,
         'ASSAULT': 6, 'BURGLARY': 5, 'THEFT': 4, 'CHEATING': 3,
@@ -95,9 +88,7 @@ def enhanced_feature_engineering():
     data_sorted = data.sort_values('Datetime')
     data_sorted['historical_crime_count'] = data_sorted.groupby(['lat_grid', 'lon_grid']).cumcount()
     
-
     data['is_high_risk'] = (data['time_weighted_severity'] >= 6).astype(int)
-    
     
     data['risk_score'] = data['time_weighted_severity'] * np.log1p(data['crime_density'])
     
