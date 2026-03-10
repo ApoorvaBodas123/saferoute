@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'map_screen.dart';
 import 'profile_screen.dart';
+import 'contacts_screen.dart';
+import 'logs_screen.dart';
+import 'help_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -14,9 +17,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   final List<Widget> _screens = [
     const MapScreen(),
-    const Center(child: Text("Contacts (Placeholder)")), // Dummy for other tabs
-    const Center(child: Text("Logs (Placeholder)")),     // Dummy
-    const Center(child: Text("Help (Placeholder)")),     // Dummy
+    const ContactsScreen(), // Dummy for other tabs
+    const LogsScreen(),     // Dummy
+    const HelpScreen(),     // Dummy
     const ProfileScreen(),
   ];
 

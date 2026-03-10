@@ -461,7 +461,7 @@ class _MapScreenState extends State<MapScreen> {
           // 4. Status Indicator bar & Route Details Panel
           if (activeRouteData != null && !isMLRouteLoading)
              Positioned(
-               bottom: 120, // Sit just above the bottom navigation bar
+               bottom: 80, // Sit just above the bottom navigation bar
                left: 16,
                right: 16,
                child: Container(

@@ -9,7 +9,6 @@ warnings.filterwarnings('ignore')
 
 class DynamicRiskScorer:
     
-    
     def __init__(self):
         self.load_models()
         self.risk_history = []

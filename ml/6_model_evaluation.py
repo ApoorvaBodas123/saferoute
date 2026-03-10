@@ -440,7 +440,7 @@ def run_comprehensive_evaluation():
     
     
     print("🚀 Starting Comprehensive Model Evaluation...")
-    
+    print("No of columns:{data.shape}")
   
     import os
     os.makedirs("./models/plots", exist_ok=True)
@@ -463,3 +463,4 @@ def run_comprehensive_evaluation():
 if __name__ == "__main__":
   
     evaluation_report = run_comprehensive_evaluation()
+
