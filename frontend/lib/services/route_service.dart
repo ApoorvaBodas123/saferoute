@@ -16,9 +16,9 @@ class RouteService {
 
     List<List<LatLng>> routes = [];
 
-    for (final route in data['routes']) {
+    for (final route in data['routes']) 
+    {
       final coords = route['geometry']['coordinates'];
-
       routes.add(
         coords
             .map<LatLng>((c) => LatLng(c[1], c[0]))

@@ -4,9 +4,30 @@ import math
 import time
 from datetime import datetime
 import random
+import joblib
+import numpy as np
+import os
 
 app = Flask(__name__)
 CORS(app)
+
+# Load ML models
+MODEL_PATH = "./models/classification_model.pkl"
+FEATURES_PATH = "./models/feature_columns.pkl"
+
+try:
+    if os.path.exists(MODEL_PATH) and os.path.exists(FEATURES_PATH):
+        classification_model = joblib.load(MODEL_PATH)
+        feature_columns = joblib.load(FEATURES_PATH)
+        print("✅ ML models loaded successfully for fast server")
+    else:
+        print("⚠️ ML models not found. Running in fallback mode.")
+        classification_model = None
+        feature_columns = None
+except Exception as e:
+    print(f"❌ Error loading models: {e}")
+    classification_model = None
+    feature_columns = None
 
 
 BANGALORE_CENTER = (12.9716, 77.5946)
@@ -27,6 +48,75 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     c = 2 * math.asin(math.sqrt(a))
     
     return R * c
+
+def get_temporal_features(dt):
+    """Extract temporal features for the model"""
+    hour = dt.hour
+    day_of_week = dt.weekday()
+    day_of_month = dt.day
+    month = dt.month
+    quarter = (month - 1) // 3 + 1
+    
+    return {
+        'hour': hour,
+        'day_of_week': day_of_week,
+        'day_of_month': day_of_month,
+        'month': month,
+        'quarter': quarter,
+        'is_weekend': 1 if day_of_week >= 5 else 0,
+        'is_morning': 1 if 6 <= hour < 12 else 0,
+        'is_afternoon': 1 if 12 <= hour < 18 else 0,
+        'is_evening': 1 if 18 <= hour < 22 else 0,
+        'is_night': 1 if hour >= 22 or hour < 6 else 0,
+        'hour_sin': np.sin(2 * np.pi * hour / 24),
+        'hour_cos': np.cos(2 * np.pi * hour / 24),
+        'day_sin': np.sin(2 * np.pi * day_of_week / 7),
+        'day_cos': np.cos(2 * np.pi * day_of_week / 7),
+        'month_sin': np.sin(2 * np.pi * month / 12),
+        'month_cos': np.cos(2 * np.pi * month / 12)
+    }
+
+def calculate_ml_risk(lat, lon):
+    """Calculate risk using the Gradient Boosting model"""
+    if classification_model is None or feature_columns is None:
+        return calculate_fallback_risk(lat, lon)
+    
+    try:
+        now = datetime.now()
+        temp_features = get_temporal_features(now)
+        
+        # Grid and spatial features
+        features = temp_features.copy()
+        features['Latitude'] = lat
+        features['Longitude'] = lon
+        features['lat_grid'] = (lat // 0.01) * 0.01
+        features['lon_grid'] = (lon // 0.01) * 0.01
+        
+        # Center is Bangalore center
+        dist_to_center = haversine_distance(lat, lon, BANGALORE_CENTER[0], BANGALORE_CENTER[1])
+        features['distance_to_center'] = dist_to_center
+        
+        # Estimate crime density (simple version for fast server)
+        features['crime_density'] = 1.0 + (1.5 if dist_to_center < 5 else 1.0 if dist_to_center < 10 else 0)
+        
+        # Prepare feature array in correct order
+        feature_values = [features.get(col, 0) for col in feature_columns]
+        feature_array = np.array(feature_values).reshape(1, -1)
+        
+        # Predict
+        risk_probability = float(classification_model.predict_proba(feature_array)[0, 1])
+        risk_score = risk_probability * 10
+        
+        return {
+            'current_risk_score': risk_score,
+            'risk_probability': risk_probability,
+            'risk_level': 'Low' if risk_score <= 3 else 'Medium' if risk_score <= 6 else 'High',
+            'is_fallback': False,
+            'model_type': 'gradient_boosting'
+        }
+    except Exception as e:
+        print(f"Error in ML prediction: {e}")
+        return calculate_fallback_risk(lat, lon)
 
 def calculate_fallback_risk(lat, lon):
     
@@ -151,7 +241,7 @@ def get_risk_score():
         if lat is None or lon is None:
             return jsonify({'error': 'Missing latitude or longitude'}), 400
         
-        risk_result = calculate_fallback_risk(lat, lon)
+        risk_result = calculate_ml_risk(lat, lon)
         
         return jsonify({
             'latitude': lat,
@@ -239,7 +329,7 @@ def get_route_update():
         remaining_distance = haversine_distance(current_lat, current_lon, target_lat, target_lon)
         
         # Get current risk
-        current_risk = calculate_fallback_risk(current_lat, current_lon)
+        current_risk = calculate_ml_risk(current_lat, current_lon)
         
         # Estimate remaining time (assuming average speed of 30 km/h)
         remaining_time = (remaining_distance / 30) * 60

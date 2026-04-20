@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import joblib
 import warnings
@@ -105,11 +105,11 @@ def train_time_series_model():
     print(f"📊 Test data shape: {X_test.shape}")
     
    
-    model = RandomForestRegressor(
+    model = GradientBoostingRegressor(
         n_estimators=100,
-        max_depth=15,
-        random_state=42,
-        n_jobs=-1
+        learning_rate=0.1,
+        max_depth=5,
+        random_state=42
     )
     
     model.fit(X_train, y_train)
@@ -137,7 +137,7 @@ def train_time_series_model():
     print(feature_importance.head(10))
     
    
-    joblib.dump(model, "./models/time_series_rf_model.pkl")
+    joblib.dump(model, "./models/time_series_model.pkl")
     joblib.dump(feature_columns, "./models/time_series_features.pkl")
     feature_importance.to_csv("./models/time_series_feature_importance.csv", index=False)
     
@@ -208,5 +208,5 @@ if __name__ == "__main__":
     trend_analysis = create_crime_trend_analysis()
     
     print("\n🎉 Time Series Analysis Complete!")
-    print("📊 Models saved: time_series_rf_model.pkl")
+    print("📊 Models saved: time_series_model.pkl")
     print("📈 Trend analysis saved: crime_trend_analysis.pkl")

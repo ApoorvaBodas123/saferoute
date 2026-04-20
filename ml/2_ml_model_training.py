@@ -1,14 +1,12 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, VotingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, accuracy_score
 from sklearn.preprocessing import StandardScaler
 import joblib
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib.pyplot as plt
+# import seaborn as sns
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -50,83 +48,37 @@ def train_crime_classification_models():
     print(f"🎯 High risk in training: {y_train_cls.mean():.2%}")
     
    
-    models = {
-        'RandomForest': RandomForestClassifier(
-            n_estimators=100, max_depth=10, random_state=42, class_weight='balanced'
-        ),
-        'GradientBoosting': GradientBoostingClassifier(
-            n_estimators=100, learning_rate=0.1, max_depth=6, random_state=42
-        ),
-        'LogisticRegression': LogisticRegression(
-            random_state=42, class_weight='balanced', max_iter=1000
-        ),
-        'SVM': SVC(
-            probability=True, random_state=42, class_weight='balanced'
-        )
-    }
+    gb_model = GradientBoostingClassifier(
+        n_estimators=100, learning_rate=0.1, max_depth=6, random_state=42
+    )
     
     
-    results = {}
-    best_model = None
-    best_score = 0
+    print(f"\n🔧 Training GradientBoosting Model...")
+    gb_model.fit(X_train, y_train_cls)
+    y_pred = gb_model.predict(X_test)
+    y_proba = gb_model.predict_proba(X_test)[:, 1]
     
-    for name, model in models.items():
-        print(f"\n🔧 Training {name}...")
-        
-        
-        if name == 'SVM':
-            model.fit(X_train_scaled, y_train_cls)
-            y_pred = model.predict(X_test_scaled)
-            y_proba = model.predict_proba(X_test_scaled)[:, 1]
-        else:
-            model.fit(X_train, y_train_cls)
-            y_pred = model.predict(X_test)
-            y_proba = model.predict_proba(X_test)[:, 1]
-        
-        
-        accuracy = accuracy_score(y_test_cls, y_pred)
-        auc_score = roc_auc_score(y_test_cls, y_proba)
-        cv_scores = cross_val_score(model, X_train, y_train_cls, cv=5, scoring='roc_auc')
-        
-        results[name] = {
+    accuracy = accuracy_score(y_test_cls, y_pred)
+    auc_score = roc_auc_score(y_test_cls, y_proba)
+    cv_scores = cross_val_score(gb_model, X_train, y_train_cls, cv=5, scoring='roc_auc')
+    
+    results = {
+        'GradientBoosting': {
             'accuracy': accuracy,
             'auc': auc_score,
             'cv_mean': cv_scores.mean(),
             'cv_std': cv_scores.std(),
-            'model': model
+            'model': gb_model
         }
-        
-        print(f"   ✅ Accuracy: {accuracy:.4f}")
-        print(f"   ✅ AUC: {auc_score:.4f}")
-        print(f"   ✅ CV Score: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
-        
-        if auc_score > best_score:
-            best_score = auc_score
-            best_model = model
-            best_model_name = name
+    }
     
-    print(f"\n🏆 Best model: {best_model_name} (AUC: {best_score:.4f})")
+    print(f"   ✅ Accuracy: {accuracy:.4f}")
+    print(f"   ✅ AUC: {auc_score:.4f}")
+    print(f"   ✅ CV Score: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
     
-    
-    print("\n🔧 Creating Ensemble Model...")
-    ensemble = VotingClassifier(
-        estimators=[
-            ('rf', models['RandomForest']),
-            ('gb', models['GradientBoosting']),
-            ('lr', models['LogisticRegression'])
-        ],
-        voting='soft'
-    )
-    
-    ensemble.fit(X_train, y_train_cls)
-    y_pred_ensemble = ensemble.predict(X_test)
-    y_proba_ensemble = ensemble.predict_proba(X_test)[:, 1]
-    
-    ensemble_auc = roc_auc_score(y_test_cls, y_proba_ensemble)
-    ensemble_accuracy = accuracy_score(y_test_cls, y_pred_ensemble)
-    
-    print(f"   ✅ Ensemble Accuracy: {ensemble_accuracy:.4f}")
-    print(f"   ✅ Ensemble AUC: {ensemble_auc:.4f}")
+    best_model = gb_model
+    best_model_name = "GradientBoosting"
+    best_score = auc_score
     
     
     if hasattr(best_model, 'feature_importances_'):
@@ -143,7 +95,7 @@ def train_crime_classification_models():
     
     
     joblib.dump(best_model, "./models/best_classification_model.pkl")
-    joblib.dump(ensemble, "./models/ensemble_model.pkl")
+    joblib.dump(best_model, "./models/classification_model.pkl")
     joblib.dump(scaler, "./models/feature_scaler.pkl")
     
     
@@ -151,7 +103,7 @@ def train_crime_classification_models():
     
     print("\n💾 Models saved successfully!")
     
-    return results, ensemble, feature_columns
+    return results, best_model, feature_columns
 
 def evaluate_model_performance(model, X_test, y_test, model_name="Model"):
     
@@ -168,7 +120,7 @@ def evaluate_model_performance(model, X_test, y_test, model_name="Model"):
     print(confusion_matrix(y_test, y_pred))
 
 if __name__ == "__main__":
-    results, ensemble_model, features = train_crime_classification_models()
+    results, gb_model, features = train_crime_classification_models()
     
     
     data = pd.read_csv("./data/ml_enhanced_crime_data.csv")
@@ -178,8 +130,8 @@ if __name__ == "__main__":
     _, X_test, _, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     
-    evaluate_model_performance(ensemble_model, X_test, y_test, "Ensemble Model")
+    evaluate_model_performance(gb_model, X_test, y_test, "GradientBoosting Model")
     
-    print(f"\n🎉 ML Training Complete! Best ensemble AUC: {results['GradientBoosting']['auc']:.4f}")
+    print(f"\n🎉 ML Training Complete! GradientBoosting AUC: {results['GradientBoosting']['auc']:.4f}")
   
     

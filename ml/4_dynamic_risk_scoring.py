@@ -17,8 +17,8 @@ class DynamicRiskScorer:
     def load_models(self):
        
         try:
-            self.classification_model = joblib.load("./models/ensemble_model.pkl")
-            self.time_series_model = joblib.load("./models/time_series_rf_model.pkl")
+            self.classification_model = joblib.load("./models/classification_model.pkl")
+            self.time_series_model = joblib.load("./models/time_series_model.pkl")
             self.scaler = joblib.load("./models/feature_scaler.pkl")
             self.feature_columns = joblib.load("./models/feature_columns.pkl")
             self.ts_features = joblib.load("./models/time_series_features.pkl")
@@ -210,7 +210,7 @@ class DynamicRiskScorer:
                 })
                 
                 
-                joblib.dump(self.classification_model, "./models/ensemble_model.pkl")
+                joblib.dump(self.classification_model, "./models/classification_model.pkl")
                 
                 return True
             else:

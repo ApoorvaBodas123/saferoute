@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib.pyplot as plt
+# import seaborn as sns
 from sklearn.metrics import (
     classification_report, confusion_matrix, roc_auc_score, 
     precision_recall_curve, average_precision_score,
@@ -22,8 +22,8 @@ class ModelEvaluator:
     def load_models(self):
       
         try:
-            self.classification_model = joblib.load("./models/ensemble_model.pkl")
-            self.time_series_model = joblib.load("./models/time_series_rf_model.pkl")
+            self.classification_model = joblib.load("./models/classification_model.pkl")
+            self.time_series_model = joblib.load("./models/time_series_model.pkl")
             self.feature_columns = joblib.load("./models/feature_columns.pkl")
             self.ts_features = joblib.load("./models/time_series_features.pkl")
             self.scaler = joblib.load("./models/feature_scaler.pkl")
@@ -452,7 +452,7 @@ def run_comprehensive_evaluation():
     report = evaluator.generate_evaluation_report()
     
   
-    evaluator.create_performance_visualizations()
+    # evaluator.create_performance_visualizations()
     
     print("\n🎉 Comprehensive Evaluation Complete!")
     print("📊 Report saved: ./models/evaluation_report.pkl")

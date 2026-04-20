@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-
+import 'package:geocoding/geocoding.dart';
 import '../services/route_service.dart';
 import '../services/location_service.dart';
 import '../services/ml_prediction_service.dart';
@@ -18,6 +18,8 @@ class _MapScreenState extends State<MapScreen> {
   bool showSafeOnly = false;
   LatLng? userLocation;
   LatLng? destination;
+  String sourceAddress = 'Your Location';
+  String destinationAddress = 'Destination';
   List<List<LatLng>> allRoutes = [];
   Map<String, dynamic>? mlRouteResult;
   bool isMLRouteLoading = false;
@@ -25,8 +27,7 @@ class _MapScreenState extends State<MapScreen> {
   Map<String, dynamic>? safestRoute;
   Map<String, dynamic>? riskyRoute;
   bool isSafetyModeActive = false;
-  
-  // Removed unused _riskZones
+
   @override
   void initState() {
     super.initState();
@@ -83,6 +84,21 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     try {
+      // First try to fetch the street addresses
+      try {
+        List<Placemark> startPlacemarks = await placemarkFromCoordinates(start.latitude, start.longitude);
+        List<Placemark> endPlacemarks = await placemarkFromCoordinates(end.latitude, end.longitude);
+        
+        if (startPlacemarks.isNotEmpty) {
+          sourceAddress = startPlacemarks.first.street ?? startPlacemarks.first.subLocality ?? 'Your Location';
+        }
+        if (endPlacemarks.isNotEmpty) {
+          destinationAddress = endPlacemarks.first.street ?? endPlacemarks.first.subLocality ?? 'Destination';
+        }
+      } catch (e) {
+        print('Error fetching geocoding: $e');
+      }
+
       final result = await MLPredictionService.getOptimizedRoute(
         start.latitude,
         start.longitude,
@@ -507,9 +523,12 @@ class _MapScreenState extends State<MapScreen> {
                      Row(
                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                        children: [
-                         _buildMetrics(Icons.access_time_filled, '${(activeRouteData['duration']).toInt()} min'),
-                         Container(width: 1, height: 30, color: Colors.grey.shade300),
-                         _buildMetrics(Icons.route, '${(activeRouteData['distance'] as double).toStringAsFixed(1)} km'),
+                         Expanded(child: _buildMetricsWithOverflow(Icons.my_location, sourceAddress)),
+                         Padding(
+                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                           child: Icon(Icons.arrow_right_alt, color: Colors.grey.shade400, size: 28),
+                         ),
+                         Expanded(child: _buildMetricsWithOverflow(Icons.location_on, destinationAddress)),
                        ],
                      )
                    ],
@@ -527,6 +546,24 @@ class _MapScreenState extends State<MapScreen> {
         Icon(icon, color: Colors.grey.shade600, size: 20),
         const SizedBox(width: 6),
         Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
+      ],
+    );
+  }
+
+  Widget _buildMetricsWithOverflow(IconData icon, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: Colors.grey.shade600, size: 20),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            value, 
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          )
+        ),
       ],
     );
   }

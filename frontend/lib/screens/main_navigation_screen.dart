@@ -17,9 +17,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   final List<Widget> _screens = [
     const MapScreen(),
-    const ContactsScreen(), // Dummy for other tabs
-    const LogsScreen(),     // Dummy
-    const HelpScreen(),     // Dummy
+    const ContactsScreen(), 
+    const LogsScreen(),    
+    const HelpScreen(),    
     const ProfileScreen(),
   ];
 

@@ -23,7 +23,7 @@ class DynamicRiskScorer:
     def load_models(self):
         
         try:
-            self.classification_model = joblib.load("./models/ensemble_model.pkl")
+            self.classification_model = joblib.load("./models/classification_model.pkl")
             self.feature_columns = joblib.load("./models/feature_columns.pkl")
             self.trend_analysis = joblib.load("./models/crime_trend_analysis.pkl")
             print("✅ Models loaded successfully")
@@ -114,7 +114,7 @@ class MLRouteOptimizer:
         
         try:
             self.risk_system = joblib.load("./models/dynamic_risk_system.pkl")
-            self.classification_model = joblib.load("./models/ensemble_model.pkl")
+            self.classification_model = joblib.load("./models/classification_model.pkl")
             self.feature_columns = joblib.load("./models/feature_columns.pkl")
             print("✅ Models loaded for route optimization")
         except Exception as e:
