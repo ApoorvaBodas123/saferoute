@@ -11,6 +11,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
 import 'api_service.dart';
@@ -25,6 +26,7 @@ class EmergencyService {
   static bool _isLocationShared = false;
   static bool _isAudioRecording = false;
   static bool _isFakeCallTriggered = false;
+  static bool _isEmergencyContactCallTriggered = false;
   static String? _audioFilePath;
   static String? _lastLocationShareTime;
   static bool _isEmergencyInProgress = false;
@@ -32,6 +34,7 @@ class EmergencyService {
   static bool get isLocationShared => _isLocationShared;
   static bool get isAudioRecording => _isAudioRecording;
   static bool get isFakeCallTriggered => _isFakeCallTriggered;
+  static bool get isEmergencyContactCallTriggered => _isEmergencyContactCallTriggered;
   static String? get audioFilePath => _audioFilePath;
   static String? get lastLocationShareTime => _lastLocationShareTime;
   static String get _mlBaseUrl =>
@@ -50,6 +53,7 @@ class EmergencyService {
     _isLocationShared = false;
     _isAudioRecording = false;
     _isFakeCallTriggered = false;
+    _isEmergencyContactCallTriggered = false;
 
     try {
       final contacts = await SafetySettingsService.getEmergencyContacts();
@@ -61,6 +65,7 @@ class EmergencyService {
         triggerPhrase,
         contacts,
       );
+      await _callPrimaryEmergencyContact(contacts);
       await _startHiddenAudioRecording();
       await _triggerFakeCall(aiCoverConversation);
       await _showEmergencyStatusNotification(aiCoverConversation);
@@ -76,6 +81,7 @@ class EmergencyService {
           },
           'actions_triggered': {
             'location_shared': _isLocationShared,
+            'contact_call': _isEmergencyContactCallTriggered,
             'audio_recording': _isAudioRecording,
             'fake_call': _isFakeCallTriggered,
           },
@@ -119,6 +125,7 @@ class EmergencyService {
 
     final summary = [
       'Location Shared: ${_isLocationShared ? 'YES' : 'NO'}',
+      'Contact Call: ${_isEmergencyContactCallTriggered ? 'STARTED' : 'UNAVAILABLE'}',
       'Audio Recording: ${_isAudioRecording ? 'ACTIVE' : 'UNAVAILABLE'}',
       'Fake Call: ${_isFakeCallTriggered ? 'TRIGGERED' : 'UNAVAILABLE'}',
       'Cover Script: ${aiScript.first}',
@@ -137,11 +144,46 @@ class EmergencyService {
 Emergency Status Report
 =====================
 Location Shared: ${_isLocationShared ? 'YES' : 'NO'}
+Emergency Contact Call: ${_isEmergencyContactCallTriggered ? 'STARTED' : 'NOT STARTED'}
 Audio Recording: ${_isAudioRecording ? 'ACTIVE' : 'STOPPED'}
 Fake Call: ${_isFakeCallTriggered ? 'TRIGGERED' : 'NOT TRIGGERED'}
 Audio File Path: ${_audioFilePath ?? 'Not available'}
 Last Location Share: ${_lastLocationShareTime ?? 'Never'}
 ''';
+  }
+
+  static Future<void> _callPrimaryEmergencyContact(
+    List<EmergencyContact> contacts,
+  ) async {
+    if (contacts.isEmpty) {
+      _isEmergencyContactCallTriggered = false;
+      return;
+    }
+
+    final primaryContact = contacts.first;
+    final rawPhone = primaryContact.phone.trim();
+    final normalizedPhone = rawPhone.replaceAll(RegExp(r'\s+'), '');
+
+    if (normalizedPhone.isEmpty) {
+      _isEmergencyContactCallTriggered = false;
+      return;
+    }
+
+    final telUri = Uri(scheme: 'tel', path: normalizedPhone);
+
+    try {
+      final launched = await launchUrl(
+        telUri,
+        mode: LaunchMode.externalApplication,
+      );
+      _isEmergencyContactCallTriggered = launched;
+      if (!launched) {
+        print('Could not launch emergency contact call for $normalizedPhone');
+      }
+    } catch (e) {
+      _isEmergencyContactCallTriggered = false;
+      print('Error launching emergency contact call: $e');
+    }
   }
 
   static Future<void> _sendEmergencyAlert(
