@@ -6,6 +6,8 @@ import '../services/route_service.dart';
 import '../services/location_service.dart';
 import '../services/ml_prediction_service.dart';
 import '../services/safety_service.dart';
+import '../services/emergency_service.dart';
+import 'dart:async';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -27,12 +29,19 @@ class _MapScreenState extends State<MapScreen> {
   Map<String, dynamic>? safestRoute;
   Map<String, dynamic>? riskyRoute;
   bool isSafetyModeActive = false;
+  bool isEmergencyDetected = false;
+  Timer? _emergencyIndicatorTimer;
 
   @override
   void initState() {
     super.initState();
     loadUserLocation();
     _initSafetyService();
+    
+    // Set context for emergency popups
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SafetyService.setContext(context);
+    });
     
     // Add test route for debugging
     final testRoute = [
@@ -62,6 +71,87 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _initSafetyService() async {
     await SafetyService.initialize();
+    _setupEmergencyDetectionListener();
+  }
+
+  void _setupEmergencyDetectionListener() {
+    // Listen for emergency detection events
+    // In a real implementation, this would use a proper event system
+    // For now, we'll simulate it with a timer that checks logs
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      // This is a simplified approach - in production, use proper event bus
+    });
+  }
+
+  void _showEmergencyDetectedFeedback() {
+    setState(() {
+      isEmergencyDetected = true;
+    });
+
+    // Cancel any existing timer
+    _emergencyIndicatorTimer?.cancel();
+
+    // Show indicator for 5 seconds
+    _emergencyIndicatorTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          isEmergencyDetected = false;
+        });
+      }
+    });
+
+    // Show snackbar confirmation
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.emergency, color: Colors.white),
+            const SizedBox(width: 8),
+            const Text('EMERGENCY PHRASE DETECTED!', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        backgroundColor: Colors.red.shade700,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showEmergencyStatus() {
+    final status = EmergencyService.getEmergencyStatus();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.info, color: Colors.blue),
+            const SizedBox(width: 8),
+            const Text('Emergency Status'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            status,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          if (userLocation != null)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                EmergencyService.triggerEmergencySequence(userLocation!);
+              },
+              child: const Text('Test Emergency', style: TextStyle(color: Colors.red)),
+            ),
+        ],
+      ),
+    );
   }
 
   Future<void> loadUserLocation() async {
@@ -470,6 +560,15 @@ class _MapScreenState extends State<MapScreen> {
                     color: isSafetyModeActive ? Colors.white : const Color(0xFFFD6296),
                   ),
                 ),
+                const SizedBox(height: 8),
+                // Emergency Status Check Button
+                FloatingActionButton(
+                  heroTag: 'statusBtn',
+                  backgroundColor: Colors.blue,
+                  mini: true,
+                  onPressed: _showEmergencyStatus,
+                  child: const Icon(Icons.info_outline, color: Colors.white),
+                ),
               ],
             ),
           ),
@@ -535,6 +634,51 @@ class _MapScreenState extends State<MapScreen> {
                  )
                ),
              ),
+          if (isEmergencyDetected)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  border: Border.all(color: Colors.red, width: 3),
+                ),
+                child: const Center(
+                  child: Card(
+                    color: Colors.red,
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.emergency, color: Colors.white, size: 32),
+                          SizedBox(width: 12),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'EMERGENCY DETECTED',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Help me phrase recognized',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
