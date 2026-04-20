@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'mongodb_service.dart';
+import 'api_service.dart';
 
 class AuthService {
   static const String _userKey = 'current_user';
@@ -71,23 +71,19 @@ class AuthService {
     final passwordError = validatePassword(password);
     if (passwordError != null) return passwordError;
     
-    final prefs = await SharedPreferences.getInstance();
-    // Simulate API delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Look for user in MongoDB
-    final registeredUser = await MongoDbService.findUserByEmail(email);
-    if (registeredUser != null) {
-      // Basic password check
-      if (registeredUser['password'] == password) {
-         await prefs.setString(_userKey, jsonEncode(registeredUser));
-         return null; // Success
+    try {
+      final response = await ApiService.login(email, password);
+      
+      if (response['message'] == 'Login successful') {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_userKey, jsonEncode(response['user']));
+        return null; // Success
       } else {
-         return 'Invalid email or password'; // Wrong password
+        return 'Login failed';
       }
+    } catch (e) {
+      return e.toString().replaceAll('Exception: ', '');
     }
-
-    return 'Email not registered. Please register first.';
   }
 
   // Register a new user
@@ -99,35 +95,25 @@ class AuthService {
     final passwordError = validatePassword(password);
     if (passwordError != null) return passwordError;
     
-    final prefs = await SharedPreferences.getInstance();
-    // Simulate API delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Check if user already exists in MongoDB
-    final existingUser = await MongoDbService.findUserByEmail(email);
-    if (existingUser != null) {
-      return 'Email already registered. Please use a different email.';
-    }
-
-    if (name.isNotEmpty && email.isNotEmpty && password.isNotEmpty) {
-      final user = {
+    try {
+      final userData = {
         'name': name,
         'email': email,
         'password': password,
-        'created_at': DateTime.now().toIso8601String(),
       };
       
-      // Save user to MongoDB
-      final success = await MongoDbService.saveUser(user);
-      if (success) {
-        // Log them in immediately
-        await prefs.setString(_userKey, jsonEncode({'name': name, 'email': email}));
+      final response = await ApiService.register(userData);
+      
+      if (response['message'] == 'User registered successfully') {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_userKey, jsonEncode(response['user']));
         return null; // Success
       } else {
-        return 'Registration failed. Please try again.';
+        return 'Registration failed';
       }
+    } catch (e) {
+      return e.toString().replaceAll('Exception: ', '');
     }
-    return 'Registration failed. Please try again.';
   }
 
   // Logout the current user

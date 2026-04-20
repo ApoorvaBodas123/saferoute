@@ -11,7 +11,7 @@ import 'package:flutter_callkit_incoming/entities/call_kit_params.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'mongodb_service.dart';
+import 'api_service.dart';
 import 'package:latlong2/latlong.dart';
 import 'auth_service.dart';
 
@@ -55,12 +55,12 @@ class EmergencyService {
     // 4. Show comprehensive status notification
     await _showEmergencyStatusNotification();
     
-    // 5. Save emergency log to MongoDB
+    // 5. Save emergency log to MongoDB via API
     final currentUser = await AuthService.getCurrentUser();
     if (currentUser != null) {
       final emergencyLog = {
-        'user_email': currentUser!['email'],
-        'user_name': currentUser!['name'],
+        'user_email': currentUser['email'],
+        'user_name': currentUser['name'],
         'location': {
           'latitude': currentLocation.latitude,
           'longitude': currentLocation.longitude,
@@ -70,9 +70,14 @@ class EmergencyService {
           'audio_recording': _isAudioRecording,
           'fake_call': _isFakeCallTriggered,
         },
-        'timestamp': DateTime.now().toIso8601String(),
       };
-      await MongoDbService.saveEmergencyLog(emergencyLog);
+      
+      try {
+        await ApiService.createEmergencyLog(emergencyLog);
+        print('Emergency log saved to MongoDB via API');
+      } catch (e) {
+        print('Failed to save emergency log: $e');
+      }
     }
   }
 

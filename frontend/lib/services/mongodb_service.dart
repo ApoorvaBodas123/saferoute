@@ -17,6 +17,9 @@ class MongoDbService {
     try {
       await dotenv.load(fileName: ".env");
       print('Environment variables loaded successfully');
+      print('MongoDB Host: ${dotenv.env['MONGODB_HOST']}');
+      print('MongoDB Port: ${dotenv.env['MONGODB_PORT']}');
+      print('MongoDB DB: ${dotenv.env['MONGODB_DB_NAME']}');
     } catch (e) {
       print('Could not load .env file: $e');
       print('Using default MongoDB connection settings');
@@ -38,8 +41,10 @@ class MongoDbService {
   // Check if running on web platform
   static bool get _isWeb {
     if (!_connectionAttempted) {
-      _isWebPlatform = html.window.document.documentElement != null;
+      // More reliable web platform detection
+      _isWebPlatform = identical(0, 0.0) && !Uri.base.toString().startsWith('file://');
       _connectionAttempted = true;
+      print('Platform detection: ${_isWebPlatform ? "Web" : "Native/Mobile"}');
     }
     return _isWebPlatform;
   }
