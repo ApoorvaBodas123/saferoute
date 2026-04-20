@@ -1,94 +1,125 @@
 import 'dart:async';
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:location/location.dart';
-import 'package:latlong2/latlong.dart';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:location/location.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'ml_prediction_service.dart';
+
 import 'emergency_service.dart';
+import 'ml_prediction_service.dart';
+import 'safety_settings_service.dart';
+
+class EmergencyDetectionEvent {
+  const EmergencyDetectionEvent({
+    required this.transcript,
+    required this.triggerPhrase,
+    required this.timestamp,
+  });
+
+  final String transcript;
+  final String triggerPhrase;
+  final DateTime timestamp;
+}
 
 class SafetyService {
   static final Location _location = Location();
   static final SpeechToText _speechToText = SpeechToText();
-  static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
-  
-  // Emergency popup overlay
-  static OverlayEntry? _emergencyOverlay;
-  static bool _isEmergencyOverlayShowing = false;
-  static BuildContext? _context;
-  
+  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  static final StreamController<EmergencyDetectionEvent> _eventController =
+      StreamController<EmergencyDetectionEvent>.broadcast();
+
   static bool _isActive = false;
   static bool _isListening = false;
+  static bool _speechReady = false;
+  static bool _isEmergencyFlowActive = false;
+  static Timer? _restartTimer;
   static StreamSubscription<LocationData>? _locationSubscription;
   static LatLng? _currentLocation;
-  
-  // Emergency cooldown to prevent multiple triggers
-  static DateTime? _lastEmergencyTrigger;
-  static const Duration _emergencyCooldown = Duration(minutes: 1);
-  
-  // The secret phrase to trigger the SOS sequence
-  static const String secretPhrase = "help me";
-  // The threshold above which a location is considered "unsafe"
+  static String _secretPhrase = SafetySettingsService.defaultSecretPhrase;
+
   static const double highRiskThreshold = 7.0;
+  static const Duration _emergencyCooldown = Duration(seconds: 20);
+  static DateTime? _lastEmergencyTrigger;
+  static const List<String> _fallbackEmergencyPhrases = <String>[
+    'help me',
+    'did you feed the dog',
+    'save me',
+    'emergency',
+  ];
 
   static bool get isActive => _isActive;
+  static bool get isListening => _isListening;
+  static String get secretPhrase => _secretPhrase;
+  static Stream<EmergencyDetectionEvent> get emergencyEvents =>
+      _eventController.stream;
 
   static Future<void> initialize() async {
-    // Initialize notifications
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings();
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosInit = DarwinInitializationSettings();
+    const settings = InitializationSettings(android: androidInit, iOS: iosInit);
+
     await _notificationsPlugin.initialize(
-      settings: initializationSettings,
-      onDidReceiveNotificationResponse: (details) {},
+      settings: settings,
+      onDidReceiveNotificationResponse: (_) {},
     );
-    
-    // Initialize speech recognition
-    await _speechToText.initialize(
-      onError: (val) => print('🎙️ Speech Error: ${val.errorMsg}'),
-      onStatus: (val) {
-        if (val == 'done' && _isActive) {
-          // Restart listening loop if it stops while safety mode is active
-          startListeningLoop();
+
+    _secretPhrase = await SafetySettingsService.getSecretPhrase();
+    await _initializeSpeechEngine();
+  }
+
+  static Future<void> refreshSettings() async {
+    _secretPhrase = await SafetySettingsService.getSecretPhrase();
+  }
+
+  static Future<void> _initializeSpeechEngine() async {
+    _speechReady = await _speechToText.initialize(
+      onError: (val) => print('Speech error: ${val.errorMsg}'),
+      onStatus: (status) {
+        if (status == 'done' || status == 'notListening') {
+          _isListening = false;
+        }
+        if ((status == 'done' || status == 'notListening') && _isActive) {
+          _restartTimer?.cancel();
+          _restartTimer = Timer(const Duration(milliseconds: 300), () {
+            startListeningLoop();
+          });
         }
       },
     );
+
+    if (!_speechReady) {
+      print('Speech recognition unavailable in this session.');
+    }
   }
 
   static Future<void> toggleSafetyMode(bool activate) async {
     _isActive = activate;
-    
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('safety_mode_active', activate);
 
     if (activate) {
-      print('Safety Mode ENABLED');
+      await refreshSettings();
+      if (!_speechReady) {
+        await _initializeSpeechEngine();
+      }
       await _startLocationTracking();
       await startListeningLoop();
-      _showNotification(
-        'Safety Mode Active', 
-        'Monitoring your surroundings and listening for emergency phrase.'
+      await _showNotification(
+        'Safety Mode Active',
+        'Monitoring surroundings and listening for your secret phrase.',
       );
     } else {
-      print(' Safety Mode DISABLED');
-      print('🛑 Safety Mode DISABLED');
       await _stopLocationTracking();
       await _stopListeningLoop();
-      _showNotification(
-        'Safety Mode Disabled', 
-        'Background monitoring has been stopped.'
+      await _showNotification(
+        'Safety Mode Disabled',
+        'Background monitoring has been stopped.',
       );
     }
   }
 
   static Future<void> _startLocationTracking() async {
-    // Request permissions
     bool serviceEnabled = await _location.serviceEnabled();
     if (!serviceEnabled) {
       serviceEnabled = await _location.requestService();
@@ -101,42 +132,35 @@ class SafetyService {
       if (permissionGranted != PermissionStatus.granted) return;
     }
 
-    // Configure background tracking
     try {
       await _location.enableBackgroundMode(enable: true);
-    } catch (e) {
-      print('Background location mode not supported on this platform: $e');
-    }
-    
-    // Only fetch risk score every ~100 meters or 30 seconds to save battery/API calls
+    } catch (_) {}
+
     await _location.changeSettings(
       accuracy: LocationAccuracy.high,
       interval: 30000,
       distanceFilter: 100,
     );
 
-    _locationSubscription = _location.onLocationChanged.listen((LocationData loc) async {
-      if (loc.latitude != null && loc.longitude != null && _isActive) {
-        _currentLocation = LatLng(loc.latitude!, loc.longitude!);
-        
-        try {
-          // Check risk silently in background
-          final riskData = await MLPredictionService.getDynamicRiskScore(
-            loc.latitude!, 
-            loc.longitude!
+    _locationSubscription =
+        _location.onLocationChanged.listen((LocationData loc) async {
+      if (loc.latitude == null || loc.longitude == null || !_isActive) return;
+
+      _currentLocation = LatLng(loc.latitude!, loc.longitude!);
+
+      try {
+        final riskData =
+            await MLPredictionService.getDynamicRiskScore(loc.latitude!, loc.longitude!);
+        final riskScore = (riskData['current_risk_score'] as num?)?.toDouble() ?? 0;
+
+        if (riskScore >= highRiskThreshold) {
+          await _showNotification(
+            'High Risk Area Detected',
+            'Risk score ${riskScore.toStringAsFixed(1)}. Stay alert.',
           );
-          
-          final riskScore = riskData['current_risk_score'] as double;
-          
-          if (riskScore >= highRiskThreshold) {
-            _showNotification(
-              '⚠️ High Risk Area Detected', 
-              'Risk Score: ${riskScore.toStringAsFixed(1)}. Stay alert and keep moving.'
-            );
-          }
-        } catch (e) {
-          print('Error checking background risk: $e');
         }
+      } catch (e) {
+        print('Background risk check failed: $e');
       }
     });
   }
@@ -144,60 +168,119 @@ class SafetyService {
   static Future<void> _stopLocationTracking() async {
     await _locationSubscription?.cancel();
     _locationSubscription = null;
+
     try {
       await _location.enableBackgroundMode(enable: false);
-    } catch (e) {
-      // Background mode not supported on all platforms via location package
-    }
+    } catch (_) {}
   }
 
   static Future<void> startListeningLoop() async {
-    // Reset listening state to allow new listening session
-    _isListening = false;
-    
-    if (!_isActive) return;
-    
-    // Force initialize speech
-    bool initialized = await _speechToText.initialize();
-    
-    if (_speechToText.isAvailable) {
+    if (!_isActive || _isListening || !_speechReady || _isEmergencyFlowActive) {
+      return;
+    }
+    if (!_speechToText.isAvailable) return;
+    if (_speechToText.isListening) {
       _isListening = true;
-      try {
-        await _speechToText.listen(
-          onResult: (result) async {
-            final recognizedWords = result.recognizedWords.toLowerCase();
-            
-            if (recognizedWords.contains(secretPhrase)) {
-              // Check cooldown to prevent multiple triggers
-              final now = DateTime.now();
-              if (_lastEmergencyTrigger != null && 
-                  now.difference(_lastEmergencyTrigger!) < _emergencyCooldown) {
-                return;
-              }
-              
-              _lastEmergencyTrigger = now;
-              _stopListeningLoop();
-              _showEmergencyDetectedFeedback();
-              
-              if (_currentLocation != null) {
-                await EmergencyService.triggerEmergencySequence(_currentLocation!);
-              } else {
-                await EmergencyService.triggerEmergencySequence(const LatLng(12.9716, 77.5946));
-              }
+      return;
+    }
+
+    _isListening = true;
+
+    try {
+      await _speechToText.listen(
+        onResult: (result) {
+          final transcript = result.recognizedWords.toLowerCase().trim();
+          if (transcript.isEmpty) return;
+
+          print('Heard transcript: $transcript');
+
+          if (_isEmergencyFlowActive) return;
+
+          if (_containsEmergencyPhrase(transcript)) {
+            final now = DateTime.now();
+            if (_lastEmergencyTrigger != null &&
+                now.difference(_lastEmergencyTrigger!) < _emergencyCooldown) {
+              return;
             }
-          },
-          listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 2),
-          listenOptions: SpeechListenOptions(
-            partialResults: true,
-            cancelOnError: false,
-            listenMode: ListenMode.dictation,
-          ),
-        );
-      } catch (e) {
-        _isListening = false;
+
+            _lastEmergencyTrigger = now;
+            _isEmergencyFlowActive = true;
+
+            _eventController.add(
+              EmergencyDetectionEvent(
+                transcript: transcript,
+                triggerPhrase: _secretPhrase,
+                timestamp: now,
+              ),
+            );
+
+            _showEmergencyDetectedFeedback();
+            _stopListeningLoop();
+
+            final location = _currentLocation ?? const LatLng(12.9716, 77.5946);
+            EmergencyService.triggerEmergencySequence(
+              location,
+              detectedTranscript: transcript,
+              triggerPhrase: _secretPhrase,
+            ).whenComplete(() {
+              _isEmergencyFlowActive = false;
+              if (_isActive) {
+                startListeningLoop();
+              }
+            });
+          }
+        },
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 2),
+        listenOptions: SpeechListenOptions(
+          partialResults: true,
+          cancelOnError: false,
+          listenMode: ListenMode.dictation,
+        ),
+      );
+    } catch (e) {
+      print('Listener start failed: $e');
+      _isListening = _speechToText.isListening;
+
+      // Web speech engines can throw if restart races with browser internals.
+      if (_isActive && !_speechToText.isListening) {
+        _restartTimer?.cancel();
+        _restartTimer = Timer(const Duration(seconds: 1), () {
+          startListeningLoop();
+        });
       }
     }
+  }
+
+  static bool _containsEmergencyPhrase(String transcript) {
+    final normalizedTranscript = transcript
+        .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    if (normalizedTranscript.isEmpty) return false;
+
+    final candidatePhrases = <String>{
+      _secretPhrase,
+      ..._fallbackEmergencyPhrases,
+    }
+        .map(
+          (p) => p
+              .toLowerCase()
+              .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+              .replaceAll(RegExp(r'\s+'), ' ')
+              .trim(),
+        )
+        .where((p) => p.isNotEmpty)
+        .toList();
+
+    for (final phrase in candidatePhrases) {
+      if (normalizedTranscript.contains(phrase)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   static Future<void> _stopListeningLoop() async {
@@ -205,173 +288,66 @@ class SafetyService {
       await _speechToText.stop();
       _isListening = false;
     }
+    _restartTimer?.cancel();
   }
 
-  
   static Future<void> _showEmergencyDetectedFeedback() async {
-    // 1. Show emergency popup
-    _showEmergencyPopup();
-    
-    // 2. Immediate vibration feedback
-    await _triggerVibration();
-    
-    // 3. Show emergency notification
     await _showEmergencyNotification();
-    
-    // 4. Flash the screen briefly (subtle indicator)
-    await _flashScreenIndicator();
-  }
-
-  static void setContext(BuildContext context) {
-    _context = context;
-  }
-
-  static void _showEmergencyPopup() {
-    if (_isEmergencyOverlayShowing || _context == null) return;
-    _isEmergencyOverlayShowing = true;
-    
-    final overlay = Overlay.of(_context!);
-    _emergencyOverlay = OverlayEntry(
-      builder: (context) => Positioned(
-        top: 100,
-        left: 20,
-        right: 20,
-        child: Material(
-          elevation: 8,
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.red,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.emergency, color: Colors.white, size: 32),
-                    SizedBox(width: 12),
-                    Text(
-                      'EMERGENCY!',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Emergency phrase detected\nLocation sent to emergency contacts',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () => hideEmergencyPopup(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.red,
-                  ),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-    
-    overlay.insert(_emergencyOverlay!);
-    print("EMERGENCY: Showing emergency popup overlay");
-  }
-
-  static void hideEmergencyPopup() {
-    _emergencyOverlay?.remove();
-    _emergencyOverlay = null;
-    _isEmergencyOverlayShowing = false;
-    print("EMERGENCY: Emergency popup hidden");
-  }
-
-  static Future<void> _triggerVibration() async {
-    try {
-      // Vibrate pattern: short-long-short to indicate emergency detected
-      // Note: This would require the 'vibration' package to be added
-      print("Vibration: Emergency phrase detected!");
-    } catch (e) {
-      print("Vibration not available: $e");
-    }
   }
 
   static Future<void> _showEmergencyNotification() async {
-    // Handle web compatibility for vibration pattern
-    AndroidNotificationDetails androidPlatformChannelSpecifics;
-    
-    try {
-      androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        'emergency_detected', 
+    AndroidNotificationDetails androidNotification;
+    if (kIsWeb) {
+      androidNotification = const AndroidNotificationDetails(
+        'emergency_detected',
         'Emergency Detected',
         channelDescription: 'Emergency phrase detection alerts',
         importance: Importance.max,
         priority: Priority.high,
         ticker: 'Emergency phrase detected',
-        sound: RawResourceAndroidNotificationSound('notification'),
+        enableVibration: false,
+        playSound: true,
+      );
+    } else {
+      androidNotification = AndroidNotificationDetails(
+        'emergency_detected',
+        'Emergency Detected',
+        channelDescription: 'Emergency phrase detection alerts',
+        importance: Importance.max,
+        priority: Priority.high,
+        ticker: 'Emergency phrase detected',
         enableVibration: true,
         playSound: true,
-        vibrationPattern: Int64List.fromList([0, 200, 100, 200]),
-      );
-    } catch (e) {
-      // Fallback for web where Int64List is not supported
-      androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        'emergency_detected', 
-        'Emergency Detected',
-        channelDescription: 'Emergency phrase detection alerts',
-        importance: Importance.max,
-        priority: Priority.high,
-        ticker: 'Emergency phrase detected',
-        sound: RawResourceAndroidNotificationSound('notification'),
-        enableVibration: false, // Disable vibration on web
-        playSound: true,
+        vibrationPattern: Int64List.fromList(<int>[0, 200, 100, 200]),
       );
     }
-    final NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-        
+
+    final details = NotificationDetails(android: androidNotification);
+
     await _notificationsPlugin.show(
-      id: 999, // Unique ID for emergency detection
-      title: 'EMERGENCY DETECTED',
-      body: 'Emergency phrase recognized. Location sent to emergency contacts.',
-      notificationDetails: platformChannelSpecifics,
+      id: 999,
+      title: 'Emergency Phrase Detected',
+      body: 'Triggering SOS sequence now.',
+      notificationDetails: details,
     );
   }
 
-  static Future<void> _flashScreenIndicator() async {
-    // This would require additional UI integration to flash the screen
-    // For now, we'll just log it
-    print("Screen flash: Emergency detected indicator");
-  }
-
   static Future<void> _showNotification(String title, String body) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'safety_alerts', 
+    const androidNotification = AndroidNotificationDetails(
+      'safety_alerts',
       'Safety Alerts',
       channelDescription: 'Important safety notifications and alerts',
       importance: Importance.max,
       priority: Priority.high,
-      ticker: 'ticker',
+      ticker: 'safety-alert',
     );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-        
+    const details = NotificationDetails(android: androidNotification);
+
     await _notificationsPlugin.show(
       id: 0,
       title: title,
       body: body,
-      notificationDetails: platformChannelSpecifics,
+      notificationDetails: details,
     );
   }
 }

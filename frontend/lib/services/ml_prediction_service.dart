@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:math' as math;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class MLPredictionService {
-  static const String _baseUrl = 'http://localhost:8000'; // ML API endpoint
+  static String get _baseUrl =>
+      dotenv.env['ML_API_BASE_URL'] ?? 'http://localhost:8000';
   
   // Get dynamic risk score for a location
   static Future<Map<String, dynamic>> getDynamicRiskScore(

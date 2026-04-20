@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ApiService {
   static String get _baseUrl {
     // In production, this would come from environment variables
-    return dotenv.env['API_BASE_URL'] ?? 'http://localhost:8000';
+    return dotenv.env['API_BASE_URL'] ?? 'http://localhost:8001';
   }
 
   // Health check
@@ -115,6 +115,43 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Get emergency logs error: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getEmergencyContacts(String userEmail) async {
+    try {
+      final response = await http.get(Uri.parse('$_baseUrl/api/emergency-contacts/$userEmail'));
+
+      final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(responseData['contacts'] ?? const []);
+      }
+
+      throw Exception(responseData['error'] ?? 'Failed to get emergency contacts');
+    } catch (e) {
+      throw Exception('Get emergency contacts error: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> saveEmergencyContacts(
+    String userEmail,
+    List<Map<String, dynamic>> contacts,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/emergency-contacts'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_email': userEmail, 'contacts': contacts}),
+      );
+
+      final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(responseData['contacts'] ?? const []);
+      }
+
+      throw Exception(responseData['error'] ?? 'Failed to save emergency contacts');
+    } catch (e) {
+      throw Exception('Save emergency contacts error: $e');
     }
   }
 }
