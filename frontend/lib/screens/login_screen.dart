@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    final success = await AuthService.login(
+    final error = await AuthService.login(
       _emailController.text.trim(),
       _passwordController.text.trim(),
     );
@@ -29,14 +29,14 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = false;
     });
 
-    if (success && mounted) {
+    if (error == null && mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Login failed. Please check your credentials.'),
+        SnackBar(
+          content: Text(error ?? 'Login failed. Please check your credentials.'),
           backgroundColor: Colors.red,
         ),
       );
