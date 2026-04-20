@@ -21,7 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = true;
     });
 
-    final success = await AuthService.register(
+    final error = await AuthService.register(
       _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text.trim(),
@@ -31,7 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = false;
     });
 
-    if (success && mounted) {
+    if (error == null && mounted) {
       // Remove all previous routes and go to Main Navigation
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
@@ -39,8 +39,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registration failed. Please fill all fields.'),
+        SnackBar(
+          content: Text(error ?? 'Registration failed. Please try again.'),
           backgroundColor: Colors.red,
         ),
       );

@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+void main() async {
+  // Ensure Flutter bindings are initialized
+  WidgetsFlutterBinding.ensureInitialized();
+  // Load environment variables before running the app
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
