@@ -30,18 +30,15 @@ class _MapScreenState extends State<MapScreen> {
   Map<String, dynamic>? riskyRoute;
   bool isSafetyModeActive = false;
   bool isEmergencyDetected = false;
+  String _detectedEmergencyPhrase = '';
   Timer? _emergencyIndicatorTimer;
+  StreamSubscription<EmergencyDetectionEvent>? _emergencyEventSubscription;
 
   @override
   void initState() {
     super.initState();
     loadUserLocation();
     _initSafetyService();
-    
-    // Set context for emergency popups
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      SafetyService.setContext(context);
-    });
     
     // Add test route for debugging
     final testRoute = [
@@ -75,17 +72,17 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _setupEmergencyDetectionListener() {
-    // Listen for emergency detection events
-    // In a real implementation, this would use a proper event system
-    // For now, we'll simulate it with a timer that checks logs
-    Timer.periodic(const Duration(seconds: 1), (timer) {
-      // This is a simplified approach - in production, use proper event bus
+    _emergencyEventSubscription?.cancel();
+    _emergencyEventSubscription = SafetyService.emergencyEvents.listen((event) {
+      if (!mounted) return;
+      _showEmergencyDetectedFeedback(event.triggerPhrase);
     });
   }
 
-  void _showEmergencyDetectedFeedback() {
+  void _showEmergencyDetectedFeedback(String phrase) {
     setState(() {
       isEmergencyDetected = true;
+      _detectedEmergencyPhrase = phrase;
     });
 
     // Cancel any existing timer
@@ -117,6 +114,13 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  @override
+  void dispose() {
+    _emergencyIndicatorTimer?.cancel();
+    _emergencyEventSubscription?.cancel();
+    super.dispose();
+  }
+
   void _showEmergencyStatus() {
     final status = EmergencyService.getEmergencyStatus();
     
@@ -145,7 +149,11 @@ class _MapScreenState extends State<MapScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                EmergencyService.triggerEmergencySequence(userLocation!);
+                EmergencyService.triggerEmergencySequence(
+                  userLocation!,
+                  detectedTranscript: 'manual test',
+                  triggerPhrase: SafetyService.secretPhrase,
+                );
               },
               child: const Text('Test Emergency', style: TextStyle(color: Colors.red)),
             ),
@@ -641,21 +649,21 @@ class _MapScreenState extends State<MapScreen> {
                   color: Colors.red.withValues(alpha: 0.1),
                   border: Border.all(color: Colors.red, width: 3),
                 ),
-                child: const Center(
+                child: Center(
                   child: Card(
                     color: Colors.red,
                     child: Padding(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.emergency, color: Colors.white, size: 32),
-                          SizedBox(width: 12),
+                          const Icon(Icons.emergency, color: Colors.white, size: 32),
+                          const SizedBox(width: 12),
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 'EMERGENCY DETECTED',
                                 style: TextStyle(
                                   color: Colors.white,
@@ -664,8 +672,8 @@ class _MapScreenState extends State<MapScreen> {
                                 ),
                               ),
                               Text(
-                                'Help me phrase recognized',
-                                style: TextStyle(
+                                '"$_detectedEmergencyPhrase" recognized',
+                                style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,
                                 ),
@@ -681,16 +689,6 @@ class _MapScreenState extends State<MapScreen> {
             ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMetrics(IconData icon, String value) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.grey.shade600, size: 20),
-        const SizedBox(width: 6),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
-      ],
     );
   }
 
