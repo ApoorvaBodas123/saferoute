@@ -23,6 +23,8 @@ CORS(app)
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / 'ml' / 'models' / 'classification_model.pkl'
 FEATURES_PATH = BASE_DIR / 'ml' / 'models' / 'feature_columns.pkl'
+IMPUTER_PATH = BASE_DIR / 'ml' / 'models' / 'imputer.pkl'
+METADATA_PATH = BASE_DIR / 'ml' / 'models' / 'model_metadata.pkl'
 BANGALORE_CENTER = (12.9716, 77.5946)
 
 MONGO_HOST = os.getenv('MONGO_HOST') or os.getenv('MONGODB_HOST', '127.0.0.1')
@@ -39,16 +41,29 @@ db = client[MONGO_DB_NAME]
 
 classification_model = None
 feature_columns = None
+imputer = None
+DECISION_THRESHOLD = 0.5
 
 
 def load_ml_artifacts() -> None:
-    global classification_model, feature_columns
+    global classification_model, feature_columns, imputer, DECISION_THRESHOLD
 
     try:
         if MODEL_PATH.exists() and FEATURES_PATH.exists():
             classification_model = joblib.load(MODEL_PATH)
             feature_columns = joblib.load(FEATURES_PATH)
             print(f'ML model loaded: {MODEL_PATH}')
+            
+            # Load Imputer
+            if IMPUTER_PATH.exists():
+                imputer = joblib.load(IMPUTER_PATH)
+                print('Feature imputer loaded.')
+                
+            # Load Threshold
+            if METADATA_PATH.exists():
+                metadata = joblib.load(METADATA_PATH)
+                DECISION_THRESHOLD = metadata.get('threshold', 0.5)
+                print(f'Model metadata loaded. Threshold: {DECISION_THRESHOLD}')
         else:
             classification_model = None
             feature_columns = None
@@ -146,18 +161,43 @@ def calculate_ml_risk(lat: float, lon: float) -> dict:
         features['distance_to_center'] = dist_to_center
         features['crime_density'] = 1.0 + (1.5 if dist_to_center < 5 else 1.0 if dist_to_center < 10 else 0)
 
+        # -----------------------------
+        # New Optimized Features
+        # -----------------------------
+        features['hour_density'] = features['hour'] * features['crime_density']
+        features['weekend_night'] = features['is_weekend'] * features['is_night']
+        features['dist_to_center_density'] = features['distance_to_center'] * features['crime_density']
+        
+        # Spatial Gradient Features
+        features['lat_squared'] = lat ** 2
+        features['lon_squared'] = lon ** 2
+        features['lat_lon_prod'] = lat * lon
+        
+        # Fill in missing historical placeholders (for unified backend compatibility)
+        for col in ['historical_crime_count', 'historical_high_risk_count', 'historical_avg_severity', 'baseline_risk_score', 'neighborhood_cluster']:
+            if col not in features:
+                features[col] = 0 if 'count' in col else 4.0 if 'severity' in col else 1.0
+
         feature_values = [features.get(col, 0) for col in feature_columns]
         feature_array = np.array(feature_values).reshape(1, -1)
+        
+        if imputer:
+            feature_array = imputer.transform(feature_array)
 
         risk_probability = float(classification_model.predict_proba(feature_array)[0, 1])
+        
+        # Use optimized threshold
+        risk_level = 'Low' if risk_probability < (DECISION_THRESHOLD * 0.7) else \
+                     'Medium' if risk_probability < DECISION_THRESHOLD else 'High'
+        
         risk_score = risk_probability * 10
 
         return {
             'current_risk_score': risk_score,
             'risk_probability': risk_probability,
-            'risk_level': 'Low' if risk_score <= 3 else 'Medium' if risk_score <= 6 else 'High',
+            'risk_level': risk_level,
             'is_fallback': False,
-            'model_type': 'gradient_boosting',
+            'model_type': 'stacking_ensemble_v2',
         }
     except Exception as exc:
         print(f'Error in ML prediction. Using fallback. Error: {exc}')
