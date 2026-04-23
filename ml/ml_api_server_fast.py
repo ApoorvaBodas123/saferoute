@@ -7,6 +7,8 @@ import random
 import joblib
 import numpy as np
 import os
+import pandas as pd
+import xgboost as xgb
 
 app = Flask(__name__)
 CORS(app)
@@ -14,20 +16,53 @@ CORS(app)
 # Load ML models
 MODEL_PATH = "./models/classification_model.pkl"
 FEATURES_PATH = "./models/feature_columns.pkl"
+GRID_DB_PATH = "./models/grid_risk_db.csv"
+IMPUTER_PATH = "./models/imputer.pkl"
+METADATA_PATH = "./models/model_metadata.pkl"
 
 try:
     if os.path.exists(MODEL_PATH) and os.path.exists(FEATURES_PATH):
         classification_model = joblib.load(MODEL_PATH)
         feature_columns = joblib.load(FEATURES_PATH)
         print("✅ ML models loaded successfully for fast server")
+        
+        # Load Imputer
+        if os.path.exists(IMPUTER_PATH):
+            imputer = joblib.load(IMPUTER_PATH)
+            print("✅ Feature imputer loaded")
+        else:
+            imputer = None
+            
+        # Load Metadata (Threshold)
+        if os.path.exists(METADATA_PATH):
+            model_metadata = joblib.load(METADATA_PATH)
+            DECISION_THRESHOLD = model_metadata.get('threshold', 0.5)
+            print(f"✅ Model metadata loaded. Threshold: {DECISION_THRESHOLD}")
+        else:
+            DECISION_THRESHOLD = 0.5
+        
+        if os.path.exists(GRID_DB_PATH):
+            grid_db = pd.read_csv(GRID_DB_PATH)
+            # Create a lookup dictionary for faster access
+            grid_lookup = grid_db.set_index(['lat_grid', 'lon_grid']).to_dict('index')
+            print(f"✅ Grid risk database loaded with {len(grid_lookup)} points")
+        else:
+            grid_lookup = {}
+            print("⚠️ Grid risk database not found. Using defaults for historical features.")
     else:
         print("⚠️ ML models not found. Running in fallback mode.")
         classification_model = None
         feature_columns = None
+        imputer = None
+        DECISION_THRESHOLD = 0.5
+        grid_lookup = {}
 except Exception as e:
     print(f"❌ Error loading models: {e}")
     classification_model = None
     feature_columns = None
+    imputer = None
+    DECISION_THRESHOLD = 0.5
+    grid_lookup = {}
 
 
 BANGALORE_CENTER = (12.9716, 77.5946)
@@ -85,12 +120,15 @@ def calculate_ml_risk(lat, lon):
         now = datetime.now()
         temp_features = get_temporal_features(now)
         
+        lat_grid = round((lat // 0.005) * 0.005, 5)
+        lon_grid = round((lon // 0.005) * 0.005, 5)
+        
         # Grid and spatial features
         features = temp_features.copy()
         features['Latitude'] = lat
         features['Longitude'] = lon
-        features['lat_grid'] = (lat // 0.01) * 0.01
-        features['lon_grid'] = (lon // 0.01) * 0.01
+        features['lat_grid'] = lat_grid
+        features['lon_grid'] = lon_grid
         
         # Center is Bangalore center
         dist_to_center = haversine_distance(lat, lon, BANGALORE_CENTER[0], BANGALORE_CENTER[1])
@@ -99,12 +137,44 @@ def calculate_ml_risk(lat, lon):
         # Estimate crime density (simple version for fast server)
         features['crime_density'] = 1.0 + (1.5 if dist_to_center < 5 else 1.0 if dist_to_center < 10 else 0)
         
+        # Add historical features from lookup or defaults
+        grid_key = (lat_grid, lon_grid)
+        if grid_key in grid_lookup:
+            hist = grid_lookup[grid_key]
+            features['historical_crime_count'] = hist['historical_crime_count']
+            features['historical_high_risk_count'] = hist['historical_high_risk_count']
+            features['historical_avg_severity'] = hist['historical_avg_severity']
+        else:
+            features['historical_crime_count'] = 0
+            features['historical_high_risk_count'] = 0
+            features['historical_avg_severity'] = 4.0 # Default mid-severity
+            
+        # New High-Impact Interactions
+        features['hour_density'] = features['hour'] * features['crime_density']
+        features['weekend_night'] = features['is_weekend'] * features['is_night']
+        features['dist_to_center_density'] = features['distance_to_center'] * features['crime_density']
+        
+        # Spatial Gradient Features (Polynomial)
+        features['lat_squared'] = lat ** 2
+        features['lon_squared'] = lon ** 2
+        features['lat_lon_prod'] = lat * lon
+        
         # Prepare feature array in correct order
         feature_values = [features.get(col, 0) for col in feature_columns]
         feature_array = np.array(feature_values).reshape(1, -1)
         
+        # Impute missing values if necessary
+        if imputer:
+            feature_array = imputer.transform(feature_array)
+        
         # Predict
         risk_probability = float(classification_model.predict_proba(feature_array)[0, 1])
+        
+        # Use optimized threshold for level classification
+        risk_level = 'Low' if risk_probability < (DECISION_THRESHOLD * 0.7) else \
+                     'Medium' if risk_probability < DECISION_THRESHOLD else 'High'
+        
+        # Scale to 0-10 for UI
         risk_score = risk_probability * 10
         
         return {
@@ -112,7 +182,7 @@ def calculate_ml_risk(lat, lon):
             'risk_probability': risk_probability,
             'risk_level': 'Low' if risk_score <= 3 else 'Medium' if risk_score <= 6 else 'High',
             'is_fallback': False,
-            'model_type': 'gradient_boosting'
+            'model_type': 'ensemble_voting'
         }
     except Exception as e:
         print(f"Error in ML prediction: {e}")
